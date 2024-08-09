@@ -1,0 +1,9 @@
+## Configuration for a CI Fuzz project
+## Generated on 2023-06-07
+build-system: cmake
+
+## Maximum time to run fuzz tests. The default is to run indefinitely.
+# timeout: 30m
+
+engine-args:
+  - -detect_leaks=0

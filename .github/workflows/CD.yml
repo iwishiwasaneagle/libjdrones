@@ -1,0 +1,88 @@
+name: CD
+
+on:
+  workflow_dispatch:
+  push:
+    tags:
+      - "v*.*.*"
+
+jobs:
+  build-python:
+    name: Build python
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          submodules: true
+
+      - name: Build wheels
+        uses: pypa/cibuildwheel@v2.16.5
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: dist
+          path: ./wheelhouse/*.whl
+
+  publish-pypi:
+    name: Publish on PyPi
+    needs: build-python
+    runs-on: ubuntu-22.04
+    permissions:
+      id-token: write
+    environment:
+      name: libjdrones
+      url: https://pypi.org/p/libjpathgen
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Download artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: dist
+          path: dist
+
+      - name: Publish a Python distribution to PyPI
+        uses: pypa/gh-action-pypi-publish@release/v1
+
+  publish-github:
+    name: Publish on GitHub
+    needs: build-python
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Download artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: dist
+          path: dist
+
+      - name: Changelog
+        uses: orhun/git-cliff-action@v3
+        id: changelog
+        with:
+          args: -vv --latest --strip header
+        env:
+          OUTPUT: CHANGELOG.md
+
+      - name: Build strings
+        id: strings
+        shell: bash
+        run: |
+          v=${GITHUB_REF##*/}
+          echo "Version: $v"
+          echo "version=$v" >> $GITHUB_OUTPUT
+
+      - name: Upload the release
+        uses: svenstaro/upload-release-action@v2
+        with:
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          tag: ${{ github.ref }}
+          file: dist/**
+          file_glob: true
+          release_name: "Release ${{steps.strings.outputs.version}}"
+          body: ${{ steps.changelog.outputs.content }}
