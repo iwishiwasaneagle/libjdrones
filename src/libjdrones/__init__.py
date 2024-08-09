@@ -4,9 +4,13 @@
 from ._core import LinearDynamicModelDroneEnv
 from ._core import NonLinearDynamicModelDroneEnv
 from ._core import State
+from ._core import FifthOrderPolynomial
+from ._core import OptimalFifthOrderPolynomial
 
 __all__ = [
     "State",
     "NonLinearDynamicModelDroneEnv",
-    "LinearDynamicModelDroneEnv"
+    "LinearDynamicModelDroneEnv",
+    "FifthOrderPolynomial",
+    "OptimalFifthOrderPolynomial"
 ]

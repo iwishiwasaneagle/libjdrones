@@ -148,8 +148,8 @@ namespace jdrones::data
   {
     X x;
     x.set_pos(state.get_pos());
-    x.set_rpy(state.get_rpy());
     x.set_vel(state.get_vel());
+    x.set_rpy(state.get_rpy());
     x.set_ang_vel(state.get_ang_vel());
     return x;
   }

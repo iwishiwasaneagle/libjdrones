@@ -16,6 +16,7 @@ set(headers
         include/jdrones/data.h
         include/jdrones/polynomial.h
         include/jdrones/solvers.h
+        include/jdrones/types.h
 )
 
 set(test_sources

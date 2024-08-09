@@ -50,6 +50,6 @@ State jdrones::envs::LinearDynamicModelDroneEnv::calc_dstate(Eigen::Vector4d rpm
 {
   X x = state_to_x(this->state);
   Eigen::Vector4d rpyT = rpm2rpyT(rpm);
-  X dx = static_cast<X>((this->A * x) + (this->B * rpyT) + (this->C));
+  X dx = (this->A * x) + (this->B * rpyT) + (this->C);
   return x_to_state(dx);
 }

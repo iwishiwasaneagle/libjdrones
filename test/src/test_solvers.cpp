@@ -42,3 +42,31 @@ TEST_CASE("Find the roots of a function using the bisection method with right ex
     }
   }
 }
+
+TEST_CASE("Calculate roots of the quadratic equation", "[solver,quadratic]")
+{
+  SECTION("Roots are real")
+  {
+    SECTION("x^2-2x+0.5")
+    {
+     jdrones::types::VEC2 roots =
+        quadratic_roots(1, -2, 0.5);
+      REQUIRE_THAT(roots(0), Catch::Matchers::WithinRel(1 + 1 / sqrt(2)));
+      REQUIRE_THAT(roots(1), Catch::Matchers::WithinRel(1 - 1 / sqrt(2)));
+    }
+    SECTION("x^2-2x+1")
+    {
+      jdrones::types::VEC2 roots = quadratic_roots(1, -2, 1);
+      REQUIRE_THAT(roots(0), Catch::Matchers::WithinRel(1.));
+      REQUIRE_THAT(roots(1), Catch::Matchers::WithinRel(1.));
+    }
+  }
+  SECTION("Roots are imaginary")
+  {
+    SECTION("x^2-2x+2")
+    {
+      jdrones::types::VEC2 roots = quadratic_roots(1, -2, 1.1);
+      REQUIRE(roots.isZero());
+    }
+  }
+}

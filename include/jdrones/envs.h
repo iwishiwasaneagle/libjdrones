@@ -16,10 +16,10 @@ namespace jdrones::envs
   class BaseDynamicModelDroneEnv
   {
    public:
-    BaseDynamicModelDroneEnv(float dt, State state) : dt(dt), state(state)
+    BaseDynamicModelDroneEnv(double dt, State state) : dt(dt), state(state)
     {
     }
-    explicit BaseDynamicModelDroneEnv(float dt) : BaseDynamicModelDroneEnv(dt, State::Zero()){};
+    explicit BaseDynamicModelDroneEnv(double dt) : BaseDynamicModelDroneEnv(dt, State::Zero()){};
     State reset(State state)
     {
       this->state = state;
@@ -34,29 +34,29 @@ namespace jdrones::envs
     };
     State step(Eigen::Vector4d);
 
-    const float dt;
+    const double dt;
 
-    [[nodiscard]] float get_dt() const
+    [[nodiscard]] double get_dt() const
     {
       return dt;
     }
-    [[nodiscard]] float get_l() const
+    [[nodiscard]] double get_l() const
     {
       return l;
     }
-    [[nodiscard]] float get_k_t() const
+    [[nodiscard]] double get_k_t() const
     {
       return k_T;
     }
-    [[nodiscard]] float get_k_q() const
+    [[nodiscard]] double get_k_q() const
     {
       return k_Q;
     }
-    [[nodiscard]] float get_tau_t() const
+    [[nodiscard]] double get_tau_t() const
     {
       return tau_T;
     }
-    [[nodiscard]] float get_tau_q() const
+    [[nodiscard]] double get_tau_q() const
     {
       return tau_Q;
     }
@@ -64,7 +64,7 @@ namespace jdrones::envs
     {
       return drag_coeffs;
     }
-    [[nodiscard]] float get_mass() const
+    [[nodiscard]] double get_mass() const
     {
       return mass;
     }
@@ -72,11 +72,11 @@ namespace jdrones::envs
     {
       return I;
     }
-    [[nodiscard]] float get_max_vel_ms() const
+    [[nodiscard]] double get_max_vel_ms() const
     {
       return max_vel_ms;
     }
-    [[nodiscard]] float get_max_acc_mss() const
+    [[nodiscard]] double get_max_acc_mss() const
     {
       return max_acc_mss;
     }
@@ -96,23 +96,27 @@ namespace jdrones::envs
     {
       return C;
     }
+    [[nodiscard]] State get_state() const
+    {
+      return state;
+    }
 
     State state;
 
-    const float l = 0.1;
-    const float k_T = 0.1;
-    const float k_Q = 0.05;
-    const float tau_T = 0.1;
-    const float tau_Q = 0.1;
+    const double l = 0.1;
+    const double k_T = 0.1;
+    const double k_Q = 0.05;
+    const double tau_T = 0.1;
+    const double tau_Q = 0.1;
     const Eigen::Vector3d drag_coeffs{ 0.1, 0.1, 0.1 };
-    const float mass = 1.4;
+    const double mass = 1.4;
     const Eigen::Vector3d I{ 0.1, 0.1, 0.1 };
-    const float max_vel_ms = 1;
-    const float max_acc_mss = 1;
-    const Eigen::Matrix<double, 4, 4> mixing_matrix{ { 0., -0.01, 0., 0.01 },
-                                                     { -0.01, 0, 0.01, 0. },
-                                                     { 0.05, -0.05, 0.05, -0.05 },
-                                                     { 0.1, 0.1, 0.1, 0.1 } };
+    const double max_vel_ms = 1;
+    const double max_acc_mss = 1;
+    const Eigen::Matrix<double, 4, 4> mixing_matrix{ { 0, -l* k_T, 0., l* k_T },
+                                                     { -l * k_T, 0, l* k_T, 0. },
+                                                     { k_Q, -k_Q, k_Q, -k_Q },
+                                                     { k_T, k_T, k_T, k_T } };
 
     const Eigen::Matrix<double, 12, 12> A{
       { 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0 },              // x
