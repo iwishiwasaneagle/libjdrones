@@ -13,6 +13,7 @@
 
 namespace py = pybind11;
 using namespace py::literals;
+using namespace jdrones::types;
 
 class PyBaseDynamicModelDroneEnv : public jdrones::envs::BaseDynamicModelDroneEnv
 {
@@ -45,10 +46,10 @@ class PyBasePolynomial : public jdrones::polynomial::BasePolynomial
   {
     PYBIND11_OVERRIDE_PURE(void, BasePolynomial, solve);
   }
-
-  Eigen::Matrix3Xd get_coeffs() override
+  Eigen::Matrix<double, -1, 3> get_coeffs() override
   {
-    PYBIND11_OVERRIDE_PURE(Eigen::Matrix3d, BasePolynomial, get_coeffs);
+    using M = Eigen::Matrix<double, -1, 3>;
+    PYBIND11_OVERRIDE_PURE(M, BasePolynomial, get_coeffs);
   }
 };
 
@@ -81,22 +82,23 @@ PYBIND11_MODULE(_core, m)
       .def(py::init<double>())
       .def(py::init<double, State>());
 
-  py::class_ < jdrones::polynomial::BasePolynomial, PyBasePolynomial>(m, "BasePolynomial")
-    .def(py::init<VEC3, VEC3, VEC3, VEC3, VEC3, VEC3, double>())
-  .def("position", &jdrones::polynomial::BasePolynomial::position)
-  .def("velocity", &jdrones::polynomial::BasePolynomial::velocity)
-  .def("acceleration", &jdrones::polynomial::BasePolynomial::acceleration)
-  .def("get_coeffs", &jdrones::polynomial::BasePolynomial::get_coeffs)
-  .def("get_T", &jdrones::polynomial::BasePolynomial::get_T);
+  py::class_<jdrones::polynomial::BasePolynomial, PyBasePolynomial>(m, "BasePolynomial")
+      .def(py::init<VEC3, VEC3, VEC3, VEC3, VEC3, VEC3, double>())
+      .def("position", &jdrones::polynomial::BasePolynomial::position)
+      .def("velocity", &jdrones::polynomial::BasePolynomial::velocity)
+      .def("acceleration", &jdrones::polynomial::BasePolynomial::acceleration)
+      .def("get_coeffs", &jdrones::polynomial::BasePolynomial::get_coeffs)
+      .def("get_T", &jdrones::polynomial::BasePolynomial::get_T)
+      .def("solve", &jdrones::polynomial::BasePolynomial::solve);
 
   py::class_<jdrones::polynomial::FifthOrderPolynomial, jdrones::polynomial::BasePolynomial>(m, "FifthOrderPolynomial")
-    .def(py::init<VEC3, VEC3, VEC3, VEC3, VEC3, VEC3, double, bool>())
-  .def("jerk", &jdrones::polynomial::FifthOrderPolynomial::jerk)
-  .def("snap", &jdrones::polynomial::FifthOrderPolynomial::snap)
-  .def("solve", &jdrones::polynomial::FifthOrderPolynomial::solve);
+      .def(py::init<VEC3, VEC3, VEC3, VEC3, VEC3, VEC3, double>())
+      .def("jerk", py::overload_cast<double>(&jdrones::polynomial::FifthOrderPolynomial::jerk))
+      .def("snap", py::overload_cast<double>(&jdrones::polynomial::FifthOrderPolynomial::snap))
+      .def("solve", &jdrones::polynomial::FifthOrderPolynomial::solve);
 
-  py::class_<jdrones::polynomial::OptimalFifthOrderPolynomial, jdrones::polynomial::FifthOrderPolynomial>(m, "OptimalFifthOrderPolynomial")
-    .def(py::init<VEC3, VEC3, VEC3, VEC3, VEC3, VEC3, double,double, unsigned int, bool>())
-  .def("solve", &jdrones::polynomial::OptimalFifthOrderPolynomial::solve);
-
+  py::class_<jdrones::polynomial::OptimalFifthOrderPolynomial, jdrones::polynomial::FifthOrderPolynomial>(
+      m, "OptimalFifthOrderPolynomial")
+      .def(py::init<VEC3, VEC3, VEC3, VEC3, VEC3, VEC3, double, double,double, unsigned int>())
+      .def("solve", &jdrones::polynomial::OptimalFifthOrderPolynomial::solve);
 }

@@ -7,11 +7,9 @@
 #define SOLVERS_H
 
 #include <eigen3/Eigen/Core>
-
 #include <functional>
 
 #include "jdrones/types.h"
-
 
 namespace jdrones::solvers
 {

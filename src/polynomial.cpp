@@ -5,10 +5,25 @@
 
 #include "jdrones/polynomial.h"
 
-#include "jdrones/data.h"
-
 namespace jdrones::polynomial
 {
+  /*****************
+   * BasePolynomial *
+   *****************/
+  BMATRIX BasePolynomial::calc_b_matrix(VEC3 pos, VEC3 vel, VEC3 acc, VEC3 tgt_pos, VEC3 tgt_vel, VEC3 tgt_acc)
+  {
+    BMATRIX b_matrix;
+    b_matrix.row(0) = pos;
+    b_matrix.row(1) = tgt_pos;
+    b_matrix.row(2) = vel;
+    b_matrix.row(3) = tgt_vel;
+    b_matrix.row(4) = acc;
+    b_matrix.row(5) = tgt_acc;
+    return b_matrix;
+  }
+  /***********************
+   * FifthOrderPolynomial *
+   ***********************/
   AMATRIX FifthOrderPolynomial::calc_A_matrix(double T)
   {
     double T2, T3, T4, T5;
@@ -171,7 +186,19 @@ namespace jdrones::polynomial
   {
     return calc_velocity_coeffs(traj.get_coeffs());
   }
+  void FifthOrderPolynomial::solve()
+  {
+    A_matrix = calc_A_matrix(this->T);
+    const Eigen::FullPivHouseholderQR<AMATRIX> qr = A_matrix.fullPivHouseholderQr();
+    this->coeffs.setZero();
+    this->coeffs.col(0) = qr.solve(b_matrix.col(0));
+    this->coeffs.col(1) = qr.solve(b_matrix.col(1));
+    this->coeffs.col(2) = qr.solve(b_matrix.col(2));
+  };
 
+  /******************************
+   * OptimalFifthOrderPolynomial *
+   ******************************/
   void OptimalFifthOrderPolynomial::solve()
   {
     std::function const f = [this](double t_test) -> double
@@ -179,6 +206,55 @@ namespace jdrones::polynomial
     double t_optim = solvers::bisection_with_right_expansion(f, 0, this->T, this->tol, this->N);
     this->T = t_optim;
     this->FifthOrderPolynomial::solve();
+  }
+
+  VEC4 OptimalFifthOrderPolynomial::get_acceleration_at_jerk_0_single_dim(FifthOrderPolynomial *traj, unsigned int i)
+  {
+    COEFFMAT3 traj_coeffs = traj->get_coeffs();
+    COEFFVEC jerk_coeffs = calc_jerk_coeffs(traj_coeffs, i);
+    VEC4 jerk_0 = VEC4::Zero();
+    jerk_0(0) = traj->get_T();
+
+    jerk_0.block<2, 1>(0, 0) = jdrones::solvers::quadratic_roots(jerk_coeffs.block<3, 1>(0, 0));
+    jerk_0 = jerk_0.cwiseMax(0).cwiseMin(traj->get_T());
+
+    VEC4 ddx;
+    for (int j = 0; j < 4; j++)
+    {
+      ddx(j) = acceleration(traj_coeffs, jerk_0(j))(i);
+    }
+
+    return ddx;
+  }
+  Eigen::Matrix<double, 4, 3> OptimalFifthOrderPolynomial::get_acceleration_at_jerk_zero(FifthOrderPolynomial *traj)
+  {
+    Eigen::Matrix<double, 4, 3> ddx;
+    ddx.setZero();
+    ddx.col(0) = get_acceleration_at_jerk_0_single_dim(traj, 0);
+    ddx.col(1) = get_acceleration_at_jerk_0_single_dim(traj, 1);
+    ddx.col(2) = get_acceleration_at_jerk_0_single_dim(traj, 2);
+    return ddx;
+  }
+  VEC3 OptimalFifthOrderPolynomial::get_max_abs_acceleration(FifthOrderPolynomial *traj)
+  {
+    Eigen::Matrix<double, 4, 3> acceleration = get_acceleration_at_jerk_zero(traj);
+    return acceleration.cwiseAbs().colwise().maxCoeff();
+  }
+  VEC3 OptimalFifthOrderPolynomial::get_max_abs_accelerations_from_time(BMATRIX b, double t)
+  {
+    if (t <= 0)
+    {
+      return VEC3::Constant(INFINITY);
+    }
+    FifthOrderPolynomial traj(b, t);
+    traj.solve();
+    return get_max_abs_acceleration(&traj);
+  }
+  double OptimalFifthOrderPolynomial::get_global_max_abs_accelerations_from_time(BMATRIX b, double t)
+  {
+    VEC3 max_abs_acceleration = get_max_abs_accelerations_from_time(b, t);
+    double global_max_abs_acceleration = max_abs_acceleration.maxCoeff();
+    return global_max_abs_acceleration;
   }
 
 }  // namespace jdrones::polynomial

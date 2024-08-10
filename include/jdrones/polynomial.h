@@ -5,11 +5,8 @@
 
 #ifndef POLYNOMIAL_H
 #define POLYNOMIAL_H
-#include <cmath>
 #include <eigen3/Eigen/Core>
 #include <eigen3/Eigen/Dense>
-
-#include "data.h"
 #include "jdrones/solvers.h"
 
 namespace jdrones::polynomial
@@ -21,58 +18,54 @@ namespace jdrones::polynomial
   using COEFFVEC = Eigen::Matrix<double, 6, 1>;
   using COEFFMAT3 = Eigen::Matrix<double, 6, 3>;
 
+  /*****************
+   * BasePolynomial *
+   *****************/
   class BasePolynomial
   {
    protected:
     BMATRIX b_matrix;
-    static BMATRIX calc_b_matrix(VEC3 pos, VEC3 vel, VEC3 acc, VEC3 tgt_pos, VEC3 tgt_vel, VEC3 tgt_acc)
-    {
-      BMATRIX b_matrix;
-      b_matrix.row(0) = pos;
-      b_matrix.row(1) = tgt_pos;
-      b_matrix.row(2) = vel;
-      b_matrix.row(3) = tgt_vel;
-      b_matrix.row(4) = acc;
-      b_matrix.row(5) = tgt_acc;
-      return b_matrix;
-    }
-
     double T;
+
+    static BMATRIX calc_b_matrix(VEC3 pos, VEC3 vel, VEC3 acc, VEC3 tgt_pos, VEC3 tgt_vel, VEC3 tgt_acc);
 
    public:
     BasePolynomial(BMATRIX b_matrix, double T) : b_matrix(b_matrix), T(T)
     {
     }
-
     BasePolynomial(VEC3 pos, VEC3 vel, VEC3 acc, VEC3 tgt_pos, VEC3 tgt_vel, VEC3 tgt_acc, double T)
         : T(T),
           b_matrix(calc_b_matrix(pos, vel, acc, tgt_pos, tgt_vel, tgt_acc))
     {
     }
 
-    double get_T()
-    {
-      return T;
-    };
-
     virtual VEC3 position(double t) = 0;
     virtual VEC3 velocity(double t) = 0;
     virtual VEC3 acceleration(double t) = 0;
 
-    BMATRIX get_b_matrix()
+    virtual void solve() = 0;
+
+    virtual Eigen::Matrix<double, -1, 3> get_coeffs() = 0;
+    [[nodiscard]] double get_T() const
+    {
+      return T;
+    }
+    [[nodiscard]] BMATRIX get_b_matrix() const
     {
       return b_matrix;
     }
-    virtual void solve() = 0;
   };
 
+  /***********************
+   * FifthOrderPolynomial *
+   ***********************/
   class FifthOrderPolynomial : public BasePolynomial
   {
    protected:
     AMATRIX A_matrix;
-    static AMATRIX calc_A_matrix(double T);
-
     COEFFMAT3 coeffs;
+
+    static AMATRIX calc_A_matrix(double T);
 
    public:
     FifthOrderPolynomial(BMATRIX b_matrix, double T) : BasePolynomial(b_matrix, T){};
@@ -105,22 +98,21 @@ namespace jdrones::polynomial
     static COEFFMAT3 calc_velocity_coeffs(COEFFMAT3 traj);
     static COEFFMAT3 calc_velocity_coeffs(FifthOrderPolynomial traj);
 
-    Eigen::Matrix<double, 6, 3> get_coeffs()
-    {
-      return this->coeffs;
-    }
+    void solve() override;
 
-    void solve() override
+    [[nodiscard]] AMATRIX get_a_matrix() const
     {
-      A_matrix = calc_A_matrix(this->T);
-      const Eigen::FullPivHouseholderQR<AMATRIX> qr = A_matrix.fullPivHouseholderQr();
-      this->coeffs.setZero();
-      this->coeffs.col(0) = qr.solve(b_matrix.col(0));
-      this->coeffs.col(1) = qr.solve(b_matrix.col(1));
-      this->coeffs.col(2) = qr.solve(b_matrix.col(2));
+      return A_matrix;
+    }
+    [[nodiscard]] Eigen::Matrix<double, -1, 3> get_coeffs() override
+    {
+      return coeffs;
     }
   };
 
+  /******************************
+   * OptimalFifthOrderPolynomial *
+   ******************************/
   class OptimalFifthOrderPolynomial : public FifthOrderPolynomial
   {
    protected:
@@ -129,64 +121,12 @@ namespace jdrones::polynomial
     unsigned int N;
 
    public:
-    [[nodiscard]] double get_max_acc()
-    {
-      return max_acc;
-    }
+    static VEC4 get_acceleration_at_jerk_0_single_dim(FifthOrderPolynomial *traj, unsigned int i);
+    static Eigen::Matrix<double, 4, 3> get_acceleration_at_jerk_zero(FifthOrderPolynomial *traj);
+    static VEC3 get_max_abs_acceleration(FifthOrderPolynomial *traj);
+    static VEC3 get_max_abs_accelerations_from_time(BMATRIX b, double t);
+    static double get_global_max_abs_accelerations_from_time(BMATRIX b, double t);
 
-    static VEC4 get_acceleration_at_jerk_0_single_dim(FifthOrderPolynomial *traj, unsigned int i)
-    {
-      COEFFMAT3 traj_coeffs = traj->get_coeffs();
-      COEFFVEC jerk_coeffs = calc_jerk_coeffs(traj_coeffs, i);
-      VEC4 jerk_0 = VEC4::Zero();
-      jerk_0(0) = traj->get_T();
-
-      jerk_0.block<2, 1>(0, 0) = jdrones::solvers::quadratic_roots(jerk_coeffs.block<3, 1>(0, 0));
-      jerk_0 = jerk_0.cwiseMax(0).cwiseMin( traj->get_T());
-
-      VEC4 ddx;
-      for (int j = 0; j < 4; j++)
-      {
-        ddx(j) = acceleration(traj_coeffs, jerk_0(j))(i);
-      }
-
-      return ddx;
-    }
-
-    static Eigen::Matrix<double, 4, 3> get_acceleration_at_jerk_zero(FifthOrderPolynomial *traj)
-    {
-      Eigen::Matrix<double, 4, 3> ddx;
-      ddx.setZero();
-      ddx.col(0) = get_acceleration_at_jerk_0_single_dim(traj, 0);
-      ddx.col(1) = get_acceleration_at_jerk_0_single_dim(traj, 1);
-      ddx.col(2) = get_acceleration_at_jerk_0_single_dim(traj, 2);
-      return ddx;
-    }
-    static VEC3 get_max_abs_acceleration(FifthOrderPolynomial *traj)
-    {
-      Eigen::Matrix<double, 4, 3> acceleration = get_acceleration_at_jerk_zero(traj);
-      return acceleration.cwiseAbs().colwise().maxCoeff();
-    }
-    static VEC3 get_max_abs_accelerations_from_time(BMATRIX b, double t)
-    {
-      if (t <= 0)
-      {
-        return VEC3::Constant(INFINITY);
-      }
-      if (b.isZero(0))
-      {
-        return VEC3::Zero();
-      }
-      FifthOrderPolynomial traj(b, t);
-      traj.solve();
-      return get_max_abs_acceleration(&traj);
-    }
-    static double get_global_max_abs_accelerations_from_time(BMATRIX b, double t)
-    {
-      VEC3 max_abs_acceleration = get_max_abs_accelerations_from_time(b, t);
-      double global_max_abs_acceleration = max_abs_acceleration.maxCoeff();
-      return global_max_abs_acceleration;
-    }
     OptimalFifthOrderPolynomial(
         BMATRIX b_matrix,
         double T = 10.0,
@@ -195,6 +135,7 @@ namespace jdrones::polynomial
         unsigned int N = 1000)
         : FifthOrderPolynomial(b_matrix, T),
           max_acc(max_acc),
+
           tol(tol),
           N(N){};
 
@@ -217,6 +158,19 @@ namespace jdrones::polynomial
     }
 
     void solve() override;
+
+    [[nodiscard]] float get_max_acc() const
+    {
+      return max_acc;
+    }
+    [[nodiscard]] float get_tol() const
+    {
+      return tol;
+    }
+    [[nodiscard]] unsigned int get_N() const
+    {
+      return N;
+    }
   };
 }  // namespace jdrones::polynomial
 
