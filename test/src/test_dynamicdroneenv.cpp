@@ -3,11 +3,11 @@
  * SPDX-License-Identifier: GPL-3.0-only
  */
 
-#include <jdrones/envs.h>
+#include <jdrones/dynamics.h>
 
 #include <catch2/catch_all.hpp>
 
-using namespace jdrones::envs;
+using namespace jdrones::dynamics;
 
 class TestLinearDynamicModelDroneEnv: public LinearDynamicModelDroneEnv
 {

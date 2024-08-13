@@ -6,11 +6,15 @@ from ._core import NonLinearDynamicModelDroneEnv
 from ._core import State
 from ._core import FifthOrderPolynomial
 from ._core import OptimalFifthOrderPolynomial
+from ._core import LQRDroneEnv
+from ._core import LQRController
 
 __all__ = [
     "State",
     "NonLinearDynamicModelDroneEnv",
     "LinearDynamicModelDroneEnv",
     "FifthOrderPolynomial",
-    "OptimalFifthOrderPolynomial"
+    "OptimalFifthOrderPolynomial",
+    "LQRDroneEnv",
+    "LQRController"
 ]
