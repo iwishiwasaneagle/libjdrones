@@ -66,6 +66,7 @@ __pycache__/
 
 # Scikit-build
 _skbuild/
+_build/
 
 # Distribution / packaging
 .Python
