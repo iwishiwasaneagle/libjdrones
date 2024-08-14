@@ -33,7 +33,7 @@ jobs:
       id-token: write
     environment:
       name: libjdrones
-      url: https://pypi.org/p/libjpathgen
+      url: https://pypi.org/p/libdrones
     steps:
       - name: Checkout
         uses: actions/checkout@v4
