@@ -1,6 +1,6 @@
 # libjdrones
 
-[![CI](https://github.com/iwishiwasaneagle/libdrones/actions/workflows/CI.yml/badge.svg)](https://github.com/iwishiwasaneagle/libdrones/actions/workflows/CI.yml)
+[![CI](https://github.com/iwishiwasaneagle/libjdrones/actions/workflows/CI.yml/badge.svg)](https://github.com/iwishiwasaneagle/libjdrones/actions/workflows/CI.yml)
 
 A fast quadcopter support library written in C++ for [jdrones](https://github.com/iwishiwasaneagle/jdrones).
 
