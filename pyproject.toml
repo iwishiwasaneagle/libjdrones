@@ -55,7 +55,7 @@ write_to = "src/libjdrones/_version.py"
 
 
 [tool.cibuildwheel]
-archs = ["auto"]
+archs = ["x86_64"]
 before-all = "bash setup.sh --all"
 test-extras = ["test"]
 test-command ="pytest {project}/test/python"
