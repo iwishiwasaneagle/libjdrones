@@ -25,14 +25,14 @@ Discussions = "https://github.comiwishiwasaneagle/libjdrones/discussions"
 [project.optional-dependencies]
 test = [
     "pytest",
-    "numpy"
+    "numpy<2" # Don't support numpy 2.0.0 and up yet
 ]
 
 
 [build-system]
 requires = [
     "scikit-build-core",
-    "pybind11[global]>2.11.0",
+    "pybind11[global]>=2.12.0",
 ]
 build-backend = "scikit_build_core.build"
 
@@ -60,4 +60,3 @@ before-all = "bash setup.sh --all"
 test-extras = ["test"]
 test-command ="pytest {project}/test/python"
 build-verbosity = 1
-manylinux-x86_64-image="manylinux_2_28"
