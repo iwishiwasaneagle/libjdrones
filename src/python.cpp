@@ -8,9 +8,9 @@
 #include <pybind11/pybind11.h>
 #include <pybind11/stl.h>
 
-#include "jdrones/dynamics.h"
 #include "jdrones/controllers.h"
 #include "jdrones/data.h"
+#include "jdrones/dynamics.h"
 #include "jdrones/envs.h"
 #include "jdrones/polynomial.h"
 
@@ -55,6 +55,50 @@ class PyBasePolynomial : public jdrones::polynomial::BasePolynomial
     PYBIND11_OVERRIDE_PURE(M, BasePolynomial, get_coeffs);
   }
 };
+template<class Polynomial>
+class PyBasePolynomialPositionDroneEnv : public jdrones::envs::BasePolynomialPositionDroneEnv<Polynomial>
+{
+ public:
+  using jdrones::envs::BasePolynomialPositionDroneEnv<Polynomial>::BasePolynomialPositionDroneEnv;
+
+  Polynomial calc_traj(VEC3 pos, VEC3 vel, VEC3 tgt_pos, VEC3 tgt_vel, std::map<std::string, double> params) override
+  {
+    PYBIND11_OVERRIDE_PURE(
+        Polynomial,
+        jdrones::envs::BasePolynomialPositionDroneEnv<Polynomial>,
+        calc_traj,
+        pos,
+        vel,
+        tgt_pos,
+        tgt_vel,
+        params);
+  }
+  std::map<std::string, double> get_traj_params() override
+  {
+    using PARAMS = std::map<std::string, double>;
+    PYBIND11_OVERRIDE_PURE(PARAMS, jdrones::envs::BasePolynomialPositionDroneEnv<Polynomial>, get_traj_params);
+  }
+};
+template<class Polynomial>
+void register_base_polynomial_position_drone_env(py::module& m, std::string typestr)
+{
+  using BPPDE = jdrones::envs::BasePolynomialPositionDroneEnv<Polynomial>;
+  py::class_<BPPDE, PyBasePolynomialPositionDroneEnv<Polynomial>>(
+      m, (std::string("BasePolynomialPositionDroneEnv") + typestr).c_str())
+      .def(py::init<double, State, Eigen::Matrix<double, 4, 12>>())
+      .def(py::init<double, State>())
+      .def(py::init<double>())
+      .def("calc_traj", &BPPDE::calc_traj)
+      .def("get_traj_params", &BPPDE::get_traj_params)
+      .def("reset", py::overload_cast<>(&BPPDE::reset))
+      .def("reset", py::overload_cast<State>(&BPPDE::reset))
+
+      .def("step", py::overload_cast<VEC3>(&BPPDE::step))
+      .def("step", py::overload_cast<std::pair<VEC3, VEC3>>(&BPPDE::step))
+
+      .def_property_readonly("env", &BPPDE::get_env)
+      .def_property_readonly("dt", &BPPDE::get_dt);
+}
 
 PYBIND11_MODULE(_core, m)
 {
@@ -120,4 +164,17 @@ PYBIND11_MODULE(_core, m)
       .def("reset", py::overload_cast<>(&jdrones::controllers::LQRController::reset))
       .def("__call__", py::overload_cast<State, State>(&jdrones::controllers::LQRController::operator()))
       .def_property("K", &jdrones::controllers::LQRController::get_K, &jdrones::controllers::LQRController::set_K);
+
+  register_base_polynomial_position_drone_env<jdrones::polynomial::FifthOrderPolynomial>(m, "5O");
+  py::class_<
+      jdrones::envs::FifthOrderPolyPositionDroneEnv,
+      jdrones::envs::BasePolynomialPositionDroneEnv<jdrones::polynomial::FifthOrderPolynomial>>(
+      m, "FifthOrderPolyPositionDroneEnv")
+      .def(py::init<double, State, Eigen::Matrix<double, 4, 12>, double>());
+  register_base_polynomial_position_drone_env<jdrones::polynomial::OptimalFifthOrderPolynomial>(m, "Opt5O");
+  py::class_<
+      jdrones::envs::OptimalFifthOrderPolyPositionDroneEnv,
+      jdrones::envs::BasePolynomialPositionDroneEnv<jdrones::polynomial::OptimalFifthOrderPolynomial>>(
+      m, "OptimalFifthOrderPolyPositionDroneEnv")
+      .def(py::init<double, State, Eigen::Matrix<double, 4, 12>, double>());
 }

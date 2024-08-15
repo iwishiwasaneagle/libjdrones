@@ -46,6 +46,10 @@ using pip (`pip install "pybind11[global]>=2.11.0"`).
 | 3.11   | 2.10.0                                                                     |
 | 3.12   | 2.11.0                                                                     |
 
+#### google benchmark
+
+Please see the [official documentation](https://github.com/google/benchmark/tree/v1.8.5)
+
 ## Run tests
 
  `Catch2>=v3.4.0` is required (see [CI.yml](.github/workflows/CI.yml))

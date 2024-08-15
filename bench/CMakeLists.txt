@@ -6,8 +6,10 @@ project(
 
 verbose_message("Adding benchmarks under ${CMAKE_PROJECT_NAME}Benchmarks...")
 
+find_package(benchmark REQUIRED)
+
 set(bench_sources
-        benchmark_lqrdroneenv.cpp
+        benchmark_envs.cpp
 )
 set(${CMAKE_PROJECT_NAME}_TEST_LIB ${LIB_NAME})
 
@@ -21,6 +23,7 @@ foreach (file ${bench_sources})
     target_link_libraries(
             ${bench_name}
             PRIVATE
+            benchmark::benchmark
             Eigen3::Eigen
             ${${CMAKE_PROJECT_NAME}_TEST_LIB}
     )

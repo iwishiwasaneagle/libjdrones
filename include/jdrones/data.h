@@ -80,7 +80,15 @@ namespace jdrones::data
       this->Eigen::Matrix<double, 20, 1>::operator=(other);
       return *this;
     }
+
+    explicit operator std::vector<State>()
+    {
+      std::vector<State> states{ *this };
+      return states;
+    }
   };
+
+  using States = std::vector<State>;
 
   class X : public Eigen::Matrix<double, 12, 1>
   {
