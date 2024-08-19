@@ -7,6 +7,7 @@
 #define POLYNOMIAL_H
 #include <eigen3/Eigen/Core>
 #include <eigen3/Eigen/Dense>
+
 #include "jdrones/solvers.h"
 
 namespace jdrones::polynomial
@@ -64,25 +65,21 @@ namespace jdrones::polynomial
    protected:
     AMATRIX A_matrix;
     COEFFMAT3 coeffs;
+    COEFFMAT3 vel_coeffs, acc_coeffs, jerk_coeffs, snap_coeffs;
 
     static AMATRIX calc_A_matrix(double T);
 
    public:
     FifthOrderPolynomial(BMATRIX b_matrix, double T) : BasePolynomial(b_matrix, T){};
 
-    FifthOrderPolynomial(VEC3 pos, VEC3 vel, VEC3 acc, VEC3 tgt_pos, VEC3 tgt_vel, VEC3 tgt_acc, double T)
+    FifthOrderPolynomial(VEC3 pos, VEC3 vel, VEC3 acc, VEC3 tgt_pos, VEC3 tgt_vel, VEC3 tgt_acc, double T = 10.0)
         : BasePolynomial(pos, vel, acc, tgt_pos, tgt_vel, tgt_acc, T)
     {
     }
-    static VEC3 position(COEFFMAT3 coeffs, double t);
     VEC3 position(double t) override;
-    static VEC3 velocity(COEFFMAT3 coeffs, double t);
     VEC3 velocity(double t) override;
-    static VEC3 acceleration(COEFFMAT3 coeffs, double t);
     VEC3 acceleration(double t) override;
-    static VEC3 jerk(COEFFMAT3 coeffs, double t);
     VEC3 jerk(double t);
-    static VEC3 snap(COEFFMAT3 coeffs, double t);
     VEC3 snap(double t);
 
     static COEFFVEC calc_snap_coeffs(COEFFMAT3 traj, unsigned int i);

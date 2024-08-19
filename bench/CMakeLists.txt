@@ -12,6 +12,7 @@ set(bench_sources
         benchmark_envs.cpp
         benchmark_data.cpp
         benchmark_transforms.cpp
+        benchmark_polynomial.cpp
 )
 set(${CMAKE_PROJECT_NAME}_TEST_LIB ${LIB_NAME})
 

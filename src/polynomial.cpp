@@ -40,15 +40,14 @@ namespace jdrones::polynomial
     };
     return A;
   }
-  VEC3 FifthOrderPolynomial::position(COEFFMAT3 coeffs, double t)
+  VEC3 FifthOrderPolynomial::position(double t)
   {
-    VEC3 a, b, c, d, e, f;
-    a = coeffs.row(0);
-    b = coeffs.row(1);
-    c = coeffs.row(2);
-    d = coeffs.row(3);
-    e = coeffs.row(4);
-    f = coeffs.row(5);
+    const VEC3 a = coeffs.row(0);
+    const VEC3 b = coeffs.row(1);
+    const VEC3 c = coeffs.row(2);
+    const VEC3 d = coeffs.row(3);
+    const VEC3 e = coeffs.row(4);
+    const VEC3 f = coeffs.row(5);
     const double t2 = t * t;
     const double t3 = t2 * t;
     const double t4 = t3 * t;
@@ -56,70 +55,41 @@ namespace jdrones::polynomial
     VEC3 result = a * t5 + b * t4 + c * t3 + d * t2 + e * t + f;
     return result;
   }
-
-  VEC3 FifthOrderPolynomial::position(double t)
+  VEC3 FifthOrderPolynomial::velocity(double t)
   {
-    return position(this->coeffs, t);
-  }
-  VEC3 FifthOrderPolynomial::velocity(COEFFMAT3 coeffs, double t)
-  {
-    COEFFMAT3 vel_coeffs = calc_velocity_coeffs(coeffs);
-    VEC3 a, b, c, d, e;
-    a = vel_coeffs.row(0);
-    b = vel_coeffs.row(1);
-    c = vel_coeffs.row(2);
-    d = vel_coeffs.row(3);
-    e = vel_coeffs.row(4);
+    const VEC3 a = vel_coeffs.row(0);
+    const VEC3 b = vel_coeffs.row(1);
+    const VEC3 c = vel_coeffs.row(2);
+    const VEC3 d = vel_coeffs.row(3);
+    const VEC3 e = vel_coeffs.row(4);
     const double t2 = t * t;
     const double t3 = t2 * t;
     const double t4 = t3 * t;
     return a * t4 + b * t3 + c * t2 + d * t + e;
   }
-  VEC3 FifthOrderPolynomial::velocity(double t)
+  VEC3 FifthOrderPolynomial::acceleration(double t)
   {
-    return velocity(this->coeffs, t);
-  }
-  VEC3 FifthOrderPolynomial::acceleration(COEFFMAT3 coeffs, double t)
-  {
-    COEFFMAT3 acc_coeffs = calc_acceleration_coeffs(coeffs);
-    VEC3 a, b, c, d;
-    a = acc_coeffs.row(0);
-    b = acc_coeffs.row(1);
-    c = acc_coeffs.row(2);
-    d = acc_coeffs.row(3);
+    const VEC3 a = acc_coeffs.row(0);
+    const VEC3 b = acc_coeffs.row(1);
+    const VEC3 c = acc_coeffs.row(2);
+    const VEC3 d = acc_coeffs.row(3);
     const double t2 = t * t;
     const double t3 = t2 * t;
     return a * t3 + b * t2 + c * t + d;
   }
-  VEC3 FifthOrderPolynomial::acceleration(double t)
+  VEC3 FifthOrderPolynomial::jerk(double t)
   {
-    return acceleration(this->coeffs, t);
-  }
-  VEC3 FifthOrderPolynomial::jerk(COEFFMAT3 coeffs, double t)
-  {
-    COEFFMAT3 jerk_coeffs = calc_jerk_coeffs(coeffs);
-    VEC3 a, b, c;
-    a = jerk_coeffs.row(0);
-    b = jerk_coeffs.row(1);
-    c = jerk_coeffs.row(2);
+    const VEC3 a = jerk_coeffs.row(0);
+    const VEC3 b = jerk_coeffs.row(1);
+    const VEC3 c = jerk_coeffs.row(2);
     const double t2 = t * t;
     return a * t2 + b * t + c;
   }
-  VEC3 FifthOrderPolynomial::jerk(double t)
-  {
-    return jerk(this->coeffs, t);
-  }
-  VEC3 FifthOrderPolynomial::snap(COEFFMAT3 coeffs, double t)
-  {
-    COEFFMAT3 snap_coeffs = calc_snap_coeffs(coeffs);
-    VEC3 a, b;
-    a = snap_coeffs.row(0);
-    b = snap_coeffs.row(1);
-    return a * t + b;
-  }
   VEC3 FifthOrderPolynomial::snap(double t)
   {
-    return snap(this->coeffs, t);
+    const VEC3 a = snap_coeffs.row(0);
+    const VEC3 b = snap_coeffs.row(1);
+    return a * t + b;
   }
   COEFFVEC FifthOrderPolynomial::calc_snap_coeffs(COEFFMAT3 traj, unsigned int i)
   {
@@ -186,6 +156,10 @@ namespace jdrones::polynomial
     this->coeffs.col(0) = qr.solve(b_matrix.col(0));
     this->coeffs.col(1) = qr.solve(b_matrix.col(1));
     this->coeffs.col(2) = qr.solve(b_matrix.col(2));
+    this->vel_coeffs = calc_velocity_coeffs(this->coeffs);
+    this->acc_coeffs = calc_acceleration_coeffs(this->coeffs);
+    this->jerk_coeffs = calc_jerk_coeffs(this->coeffs);
+    this->snap_coeffs = calc_snap_coeffs(this->coeffs);
   };
 
   /******************************
@@ -202,8 +176,7 @@ namespace jdrones::polynomial
 
   VEC4 OptimalFifthOrderPolynomial::get_acceleration_at_jerk_0_single_dim(FifthOrderPolynomial *traj, unsigned int i)
   {
-    COEFFMAT3 traj_coeffs = traj->get_coeffs();
-    COEFFVEC jerk_coeffs = calc_jerk_coeffs(traj_coeffs, i);
+    COEFFVEC jerk_coeffs = calc_jerk_coeffs(traj->get_coeffs(), i);
     VEC4 jerk_0 = VEC4::Zero();
     jerk_0(0) = traj->get_T();
 
@@ -213,7 +186,7 @@ namespace jdrones::polynomial
     VEC4 ddx;
     for (int j = 0; j < 4; j++)
     {
-      ddx(j) = acceleration(traj_coeffs, jerk_0(j))(i);
+      ddx(j) = traj->acceleration(jerk_0(j))(i);
     }
 
     return ddx;
