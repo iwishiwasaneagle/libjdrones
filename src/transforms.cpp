@@ -35,27 +35,23 @@ namespace jdrones
 
   Eigen::Vector4d euler_to_quat(Eigen::Vector3d rpy)
   {
-    double roll, pitch, yaw;
-    roll = rpy(0);
-    pitch = rpy(1);
-    yaw = rpy(2);
+    const double half_roll = rpy(0) * 0.5;
+    const double half_pitch = rpy(1) * 0.5;
+    const double half_yaw = rpy(2) * 0.5;
 
-    float cy, sy, cp, sp, cr, sr, w, x, y, z;
+    const double cy = cos(half_yaw);
+    const double sy = sin(half_yaw);
+    const double cp = cos(half_pitch);
+    const double sp = sin(half_pitch);
+    const double cr = cos(half_roll);
+    const double sr = sin(half_roll);
 
-    cy = cos(yaw * 0.5);
-    sy = sin(yaw * 0.5);
-    cp = cos(pitch * 0.5);
-    sp = sin(pitch * 0.5);
-    cr = cos(roll * 0.5);
-    sr = sin(roll * 0.5);
+    const double w = cr * cp * cy + sr * sp * sy;
+    const double x = sr * cp * cy - cr * sp * sy;
+    const double y = cr * sp * cy + sr * cp * sy;
+    const double z = cr * cp * sy - sr * sp * cy;
 
-    w = cr * cp * cy + sr * sp * sy;
-    x = sr * cp * cy - cr * sp * sy;
-    y = cr * sp * cy + sr * cp * sy;
-    z = cr * cp * sy - sr * sp * cy;
-
-    Eigen::Vector4d quat{ x, y, z, w };
-    return quat;
+    return Eigen::Vector4d{ x, y, z, w };
   }
 
   Eigen::Matrix<double, 3, 3> quat_to_rotmat(Eigen::Vector4d quat)
