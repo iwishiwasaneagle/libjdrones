@@ -10,6 +10,7 @@ find_package(benchmark REQUIRED)
 
 set(bench_sources
         benchmark_envs.cpp
+        benchmark_data.cpp
 )
 set(${CMAKE_PROJECT_NAME}_TEST_LIB ${LIB_NAME})
 

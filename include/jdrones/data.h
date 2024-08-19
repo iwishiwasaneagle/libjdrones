@@ -141,24 +141,20 @@ namespace jdrones::data
     }
   };
 
+  constexpr int STATE_TO_X_INDEX[12] = { 0, 1, 2, 10, 11, 12, 7, 8, 9, 13, 14, 15 };
+
   inline State x_to_state(X x)
   {
-    State state;
-    state.setZero();
-    state.set_pos(x.get_pos());
-    state.set_rpy(x.get_rpy());
-    state.set_vel(x.get_vel());
-    state.set_ang_vel(x.get_ang_vel());
-    state.set_quat(euler_to_quat(x.get_rpy()));
+    const Eigen::Vector<int, 12> indices(STATE_TO_X_INDEX);
+    State state = State::Zero();
+    state(indices) = x;
     return state;
   }
+
   inline X state_to_x(State state)
   {
-    X x;
-    x.set_pos(state.get_pos());
-    x.set_vel(state.get_vel());
-    x.set_rpy(state.get_rpy());
-    x.set_ang_vel(state.get_ang_vel());
+    const Eigen::Vector<int, 12> indices(STATE_TO_X_INDEX);
+    X x = state(indices);
     return x;
   }
 }  // namespace jdrones::data
