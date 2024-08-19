@@ -84,3 +84,6 @@ jdrones::types::VEC2 jdrones::solvers::quadratic_roots(double a, double b, doubl
   }
   return roots;
 }
+
+
+

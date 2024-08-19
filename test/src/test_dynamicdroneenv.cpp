@@ -9,17 +9,16 @@
 
 using namespace jdrones::dynamics;
 
-class TestLinearDynamicModelDroneEnv: public LinearDynamicModelDroneEnv
+class TestLinearDynamicModelDroneEnv : public LinearDynamicModelDroneEnv
 {
-public:
+ public:
   using LinearDynamicModelDroneEnv::LinearDynamicModelDroneEnv;
-protected:
-    State calc_dstate(Eigen::Vector4d rpm) override
-    {
-      return LinearDynamicModelDroneEnv::calc_dstate(rpm.array().pow(2));
 
-    }
-
+ protected:
+  State calc_dstate(Eigen::Vector4d rpm) override
+  {
+    return LinearDynamicModelDroneEnv::calc_dstate(rpm.array().pow(2));
+  }
 };
 
 TEMPLATE_TEST_CASE("Envs can be instantiated", "[env]", TestLinearDynamicModelDroneEnv, NonlinearDynamicModelDroneEnv)
@@ -45,6 +44,24 @@ TEMPLATE_TEST_CASE(
   State obs;
   TestType env(dt);
   double hover_mag = sqrt(env.get_mass() * jdrones::constants::g / (4 * env.get_k_t()));
+  SECTION("Run for multiple time steps")
+  {
+    double T = GENERATE(0.1, 10);
+    DYNAMIC_SECTION("At origin for " << T << " seconds with dt=" << dt)
+    {
+      TestType env(dt);
+      env.reset();
+      VEC4 u = VEC4::Constant(hover_mag);
+      State observation;
+      for (int i = 0; i < T / dt; ++i)
+      {
+        observation = env.step(u);
+      }
+      double observation_sum = observation.sum();
+      bool is_nan = isnanf(observation_sum);
+      REQUIRE(!is_nan);
+    }
+  }
   SECTION("Constant input")
   {
     double yaw = GENERATE(0, 0.1);
@@ -97,7 +114,7 @@ TEMPLATE_TEST_CASE(
       int i = GENERATE(range(0, 6));
       DYNAMIC_SECTION("Sign matches expected for test case " << i)
       {
-        obs = env.step(hover_mag*vec_omega.row(i));
+        obs = env.step(hover_mag * vec_omega.row(i));
         REQUIRE_THAT(obs.get_ang_vel().cwiseSign(), Catch::Matchers::RangeEquals(exp.row(i)));
       }
     }

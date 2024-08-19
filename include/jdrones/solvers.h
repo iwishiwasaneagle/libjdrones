@@ -7,6 +7,7 @@
 #define SOLVERS_H
 
 #include <eigen3/Eigen/Core>
+#include <eigen3/Eigen/Dense>
 #include <functional>
 
 #include "jdrones/types.h"
@@ -24,6 +25,102 @@ namespace jdrones::solvers
 
   types::VEC2 quadratic_roots(types::VEC3 abc);
   types::VEC2 quadratic_roots(double a, double b, double c);
+
+  /**
+   * @brief Arimoto Potter method for continuous model of Riccati equation
+   * @authors: Horibe Takamasa
+   *
+   * @param A
+   * @param B
+   * @param Q
+   * @param R
+   * @param P
+   * @return
+   */
+  template<int xdim, int udim>
+  bool solveRiccatiArimotoPotter(
+      const Eigen::Matrix<double, xdim, xdim> &A,
+      const Eigen::Matrix<double, xdim, udim> &B,
+      const Eigen::Matrix<double, xdim, xdim> &Q,
+      const Eigen::Matrix<double, udim, udim> &R,
+      Eigen::Matrix<double, xdim, xdim> &P)
+  {
+    const uint dim_x = A.rows();
+
+    // set Hamilton matrix
+    Eigen::MatrixXd Ham = Eigen::MatrixXd::Zero(2 * dim_x, 2 * dim_x);
+    Ham << A, -B * R.inverse() * B.transpose(), -Q, -A.transpose();
+
+    // calc eigenvalues and eigenvectors
+    Eigen::EigenSolver<Eigen::MatrixXd> Eigs(Ham);
+
+    // extract stable eigenvectors into 'eigvec'
+    Eigen::MatrixXcd eigvec = Eigen::MatrixXcd::Zero(2 * dim_x, dim_x);
+    int j = 0;
+    for (int i = 0; i < 2 * dim_x; ++i)
+    {
+      if (Eigs.eigenvalues()[i].real() < 0.)
+      {
+        eigvec.col(j) = Eigs.eigenvectors().block(0, i, 2 * dim_x, 1);
+        ++j;
+      }
+    }
+
+    // calc P with stable eigen vector matrix
+    Eigen::MatrixXcd Vs_1, Vs_2;
+    Vs_1 = eigvec.block(0, 0, dim_x, dim_x);
+    Vs_2 = eigvec.block(dim_x, 0, dim_x, dim_x);
+    P = (Vs_2 * Vs_1.inverse()).real();
+
+    return true;
+  }
+  /**
+   * @brief Interation method for continuous model of Riccati equation
+   * @authors: Horibe Takamasa
+   *
+   * @param A
+   * @param B
+   * @param Q
+   * @param R
+   * @param P
+   * @param dt
+   * @param tolerance
+   * @param iter_max
+   * @return
+   */
+  template<int xdim, int udim>
+  bool solveRiccatiIterationC(
+      const Eigen::Matrix<double, xdim, xdim> &A,
+      const Eigen::Matrix<double, xdim, udim> &B,
+      const Eigen::Matrix<double, xdim, xdim> &Q,
+      const Eigen::Matrix<double, udim, udim> &R,
+      Eigen::Matrix<double, xdim, xdim> &P,
+      const double dt = 0.001,
+      const double &tolerance = 1.E-5,
+      const uint iter_max = 100000)
+  {
+    P = Q;  // initialize
+
+    Eigen::MatrixXd P_next;
+
+    Eigen::MatrixXd AT = A.transpose();
+    Eigen::MatrixXd BT = B.transpose();
+    Eigen::MatrixXd Rinv = R.inverse();
+
+    double diff;
+    for (uint i = 0; i < iter_max; ++i)
+    {
+      P_next = P + (P * A + AT * P - P * B * Rinv * BT * P + Q) * dt;
+      diff = fabs((P_next - P).maxCoeff());
+      P = P_next;
+      if (diff < tolerance)
+      {
+        return true;
+      }
+    }
+    return false;  // over iteration limit
+  }
+
 }  // namespace jdrones::solvers
 
 #endif  // SOLVERS_H

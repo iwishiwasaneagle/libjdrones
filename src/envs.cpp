@@ -10,32 +10,32 @@ namespace jdrones::envs
 {
   data::State LQRDroneEnv::reset(data::State state)
   {
-    this->env.reset(state);
+    NonlinearDynamicModelDroneEnv::reset(state);
     this->controller.reset();
 
-    return this->env.get_state();
+    return this->state;
   }
 
   data::State LQRDroneEnv::reset()
   {
-    this->env.reset();
+    NonlinearDynamicModelDroneEnv::reset();
     this->controller.reset();
 
-    return this->env.get_state();
+    return this->state;
   }
   std::tuple<State, double, bool, bool> LQRDroneEnv::step(data::State action)
   {
-    VEC4 lqr_action = this->controller(this->env.get_state(), action);
+    VEC4 lqr_action = this->controller(state_to_x(this->state), state_to_x(action));
 
-    VEC4 delinearised_action{ 0, 0, 0, this->env.get_mass() * constants::g };
-    delinearised_action = this->env.rpm2rpyT(delinearised_action + lqr_action);
+    VEC4 delinearised_action{ 0, 0, 0, this->mass * constants::g };
+    delinearised_action += lqr_action;
+    delinearised_action = this->rpyT2rpm(delinearised_action);
     delinearised_action = delinearised_action.cwiseMax(0).cwiseSqrt();
 
-    data::State obs = this->env.step(delinearised_action);
+    data::State obs = NonlinearDynamicModelDroneEnv::step(delinearised_action);
 
     return { obs, 0.0, false, false };
   }
-
 
   polynomial::FifthOrderPolynomial FifthOrderPolyPositionDroneEnv::calc_traj(
       VEC3 pos,
@@ -45,8 +45,8 @@ namespace jdrones::envs
       std::map<std::string, double> params)
   {
     double max_vel = params["max_vel"];
-    double dist = sqrt((tgt_pos-tgt_vel).array().pow(2).sum());
-    double T = dist/max_vel;
+    double dist = sqrt((tgt_pos - tgt_vel).array().pow(2).sum());
+    double T = dist / max_vel;
     polynomial::FifthOrderPolynomial traj(pos, vel, VEC3::Zero(), tgt_pos, tgt_vel, VEC3::Zero(), T);
     traj.solve();
     return traj;

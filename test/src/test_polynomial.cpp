@@ -5,13 +5,11 @@
 #include <jdrones/polynomial.h>
 
 #include <catch2/catch_all.hpp>
+#include "utils.h"
 
 using namespace jdrones::polynomial;
 
-static bool almost_equal(const double& lhs, const double& rhs)
-{
-  return std::abs(lhs - rhs) < 1e-9;
-}
+
 
 TEST_CASE("Increased T reduces the 2nd derivative (acceleration)", "[polynomial]")
 {

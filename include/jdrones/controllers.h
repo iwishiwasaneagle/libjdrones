@@ -6,15 +6,15 @@
 #ifndef CONTROLLERS_H
 #define CONTROLLERS_H
 #include "jdrones/data.h"
+#include "solvers.h"
 
 namespace jdrones::controllers
 {
-  template <typename T>
+  template<typename T>
   T error(T measured, T setpoint)
   {
-    return measured - setpoint;
+    return setpoint - measured;
   }
-
 
   class PIDController
   {
@@ -40,28 +40,56 @@ namespace jdrones::controllers
     void reset();
   };
 
+  template<int xdim, int udim>
   class LQRController
   {
-   private:
-    data::X e;
-    Eigen::Matrix<double, 4, 12> K;
+    Eigen::Matrix<double, xdim, 1> e;
+    Eigen::Matrix<double, udim, xdim> K;
 
    public:
-    LQRController(Eigen::Matrix<double, 4, 12> K) : K(K), e(data::X::Zero())
+    [[nodiscard]] Eigen::Matrix<double, xdim, 1> get_e() const
     {
+      return e;
     }
 
-    VEC4 operator()(data::State measured, data::State setpoint);
-    VEC4 operator()(data::X measured, data::X setpoint);
-    void set_K(Eigen::Matrix<double, 4, 12> K)
+    LQRController(Eigen::Matrix<double, udim, xdim> K) : K(K), e(Eigen::Matrix<double, xdim, 1>::Zero())
+    {
+    }
+    LQRController(
+      Eigen::Matrix<double, xdim, xdim> A,
+      Eigen::Matrix<double, xdim, udim> B,
+      Eigen::Matrix<double, xdim, xdim> Q,
+      Eigen::Matrix<double, udim, udim> R
+) :e(Eigen::Matrix<double, xdim, 1>::Zero()), K(Eigen::Matrix<double, udim, xdim>::Zero())
+    {
+      Eigen::Matrix<double, xdim, xdim> P = Eigen::Matrix<double, xdim, xdim>::Zero();
+      bool success = solvers::solveRiccatiArimotoPotter<xdim, udim>(A, B, Q, R, P);
+      if(!success)
+      {
+        throw "Failed to solve CARE";
+      }
+      K = R.inverse() * (B.transpose() * P);
+    }
+
+    void set_K(Eigen::Matrix<double, udim, xdim> K)
     {
       this->K = K;
     }
-    Eigen::Matrix<double, 4, 12> get_K()
+    Eigen::Matrix<double, udim, xdim> get_K()
     {
       return this->K;
     }
-    void reset();
+    void reset()
+    {
+      this->e.setZero();
+    }
+    Eigen::Matrix<double, udim, 1> operator()(
+        Eigen::Matrix<double, xdim, 1> measured,
+        Eigen::Matrix<double, xdim, 1> setpoint)
+    {
+      this->e = error<Eigen::Matrix<double, xdim, 1>>(measured, setpoint);
+      return this->K * this->e;
+    }
   };
 
 }  // namespace jdrones::controllers

@@ -7,7 +7,7 @@ from ._core import State
 from ._core import FifthOrderPolynomial
 from ._core import OptimalFifthOrderPolynomial
 from ._core import LQRDroneEnv
-from ._core import LQRController
+from ._core import LQRController_12_4 as LQRController
 from ._core import FifthOrderPolyPositionDroneEnv
 from ._core import OptimalFifthOrderPolyPositionDroneEnv
 

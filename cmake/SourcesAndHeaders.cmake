@@ -24,8 +24,13 @@ set(headers
 )
 
 set(test_sources
+        src/test_envs.cpp
         src/test_dynamicdroneenv.cpp
         src/test_data.cpp
         src/test_polynomial.cpp
         src/test_solvers.cpp
+        src/test_controller.cpp
+)
+set(test_headers
+        src/utils.h
 )

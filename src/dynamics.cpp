@@ -4,9 +4,16 @@
  */
 #include "jdrones/dynamics.h"
 
+#include <eigen3/Eigen/Core>
+#include <eigen3/Eigen/Dense>
+
 VEC4 jdrones::dynamics::BaseDynamicModelDroneEnv::rpm2rpyT(VEC4 rpm)
 {
-  return Eigen::Vector4d(mixing_matrix * rpm);
+  return VEC4(mixing_matrix * rpm);
+}
+VEC4 jdrones::dynamics::BaseDynamicModelDroneEnv::rpyT2rpm(VEC4 rpm)
+{
+  return VEC4(mixing_matrix.inverse() * rpm);
 }
 
 State jdrones::dynamics::BaseDynamicModelDroneEnv::step(VEC4 rpm)

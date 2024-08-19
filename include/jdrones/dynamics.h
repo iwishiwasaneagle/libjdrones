@@ -73,14 +73,6 @@ namespace jdrones::dynamics
     {
       return I;
     }
-    [[nodiscard]] double get_max_vel_ms() const
-    {
-      return max_vel_ms;
-    }
-    [[nodiscard]] double get_max_acc_mss() const
-    {
-      return max_acc_mss;
-    }
     [[nodiscard]] Eigen::Matrix<double, 4, 4> get_mixing_matrix() const
     {
       return mixing_matrix;
@@ -112,8 +104,6 @@ namespace jdrones::dynamics
     const Eigen::Vector3d drag_coeffs{ 0.1, 0.1, 0.1 };
     const double mass = 1.4;
     const Eigen::Vector3d I{ 0.1, 0.1, 0.1 };
-    const double max_vel_ms = 1;
-    const double max_acc_mss = 1;
     const Eigen::Matrix<double, 4, 4> mixing_matrix{ { 0, -l* k_T, 0., l* k_T },
                                                      { -l * k_T, 0, l* k_T, 0. },
                                                      { k_Q, -k_Q, k_Q, -k_Q },
@@ -152,9 +142,10 @@ namespace jdrones::dynamics
     const Eigen::Matrix<double, 12, 1> C{ { 0, 0, 0, 0, 0, -constants::g, 0, 0, 0, 0, 0, 0 } };
 
     VEC4 rpm2rpyT(VEC4 rpm);
+    VEC4 rpyT2rpm(VEC4 rpyT);
 
    protected:
-    virtual  State calc_dstate(VEC4) = 0;
+    virtual State calc_dstate(VEC4) = 0;
   };
 
   class LinearDynamicModelDroneEnv : public BaseDynamicModelDroneEnv

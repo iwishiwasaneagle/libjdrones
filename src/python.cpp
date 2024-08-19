@@ -92,12 +92,28 @@ void register_base_polynomial_position_drone_env(py::module& m, std::string type
       .def("get_traj_params", &BPPDE::get_traj_params)
       .def("reset", py::overload_cast<>(&BPPDE::reset))
       .def("reset", py::overload_cast<State>(&BPPDE::reset))
-
       .def("step", py::overload_cast<VEC3>(&BPPDE::step))
       .def("step", py::overload_cast<std::pair<VEC3, VEC3>>(&BPPDE::step))
-
       .def_property_readonly("env", &BPPDE::get_env)
       .def_property_readonly("dt", &BPPDE::get_dt);
+}
+
+template<int xdim, int udim>
+void register_lqr_controller(py::module& m)
+{
+  using LQR = jdrones::controllers::LQRController<xdim, udim>;
+  std::string class_name = "LQRController";
+  class_name += "_" + std::to_string(xdim) + "_" + std::to_string(udim);
+  py::class_<LQR>(m, class_name.c_str())
+      .def(py::init<
+           Eigen::Matrix<double, xdim, xdim>,
+           Eigen::Matrix<double, xdim, udim>,
+           Eigen::Matrix<double, xdim, xdim>,
+           Eigen::Matrix<double, udim, udim>>())
+      .def(py::init<Eigen::Matrix<double, udim, xdim>>())
+      .def("reset", py::overload_cast<>(&LQR::reset))
+      .def("__call__", py::overload_cast<Eigen::Matrix<double, xdim, 1>, Eigen::Matrix<double, xdim, 1>>(&LQR::operator()))
+      .def_property("K", &LQR::get_K, &LQR::set_K);
 }
 
 PYBIND11_MODULE(_core, m)
@@ -105,7 +121,15 @@ PYBIND11_MODULE(_core, m)
   m.doc() = "A C++ library to speed jdrones computations";
 
   py::class_<Eigen::Matrix<double, 20, 1>>(m, "EigenMatrix20d1");
-  py::class_<jdrones::data::State, Eigen::Matrix<double, 20, 1>>(m, "State").def(py::init<>()).def(py::init<const State&>());
+  py::class_<jdrones::data::State, Eigen::Matrix<double, 20, 1>>(m, "State")
+      .def(py::init<>())
+      .def(py::init<const State&>())
+      .def_property("pos", &State::get_pos, &State::set_pos)
+      .def_property("quat", &State::get_quat, &State::set_quat)
+      .def_property("vel", &State::get_vel, &State::set_vel)
+      .def_property("ang_vel", &State::get_ang_vel, &State::get_ang_vel)
+      .def_property("rpy", &State::get_rpy, &State::set_rpy)
+      .def_property("prop_omega", &State::get_prop_omega, &State::get_prop_omega);
 
   py::class_<jdrones::dynamics::BaseDynamicModelDroneEnv, PyBaseDynamicModelDroneEnv>(m, "BaseDynamicModelDroneEnv")
       .def(py::init<double>())
@@ -129,6 +153,16 @@ PYBIND11_MODULE(_core, m)
       .def(py::init<double>())
       .def(py::init<double, State>());
 
+  register_lqr_controller<12, 4>(m);
+  py::class_<jdrones::envs::LQRDroneEnv, jdrones::dynamics::NonlinearDynamicModelDroneEnv>(m, "LQRDroneEnv")
+      .def(py::init<double, State, Eigen::Matrix<double, 4, 12>>())
+      .def(py::init<double, State>())
+      .def(py::init<double>())
+      .def("reset", py::overload_cast<>(&jdrones::envs::LQRDroneEnv::reset))
+      .def("reset", py::overload_cast<State>(&jdrones::envs::LQRDroneEnv::reset))
+      .def("step", &jdrones::envs::LQRDroneEnv::step)
+      .def("set_K", &jdrones::envs::LQRDroneEnv::set_K);
+
   py::class_<jdrones::polynomial::BasePolynomial, PyBasePolynomial>(m, "BasePolynomial")
       .def(py::init<VEC3, VEC3, VEC3, VEC3, VEC3, VEC3, double>())
       .def("position", &jdrones::polynomial::BasePolynomial::position)
@@ -149,32 +183,30 @@ PYBIND11_MODULE(_core, m)
       .def(py::init<VEC3, VEC3, VEC3, VEC3, VEC3, VEC3, double, double, double, unsigned int>())
       .def("solve", &jdrones::polynomial::OptimalFifthOrderPolynomial::solve);
 
-  py::class_<jdrones::envs::LQRDroneEnv>(m, "LQRDroneEnv")
-      .def(py::init<double, State, Eigen::Matrix<double, 4, 12>>())
-      .def(py::init<double, State>())
-      .def(py::init<double>())
-      .def("reset", py::overload_cast<>(&jdrones::envs::LQRDroneEnv::reset))
-      .def("reset", py::overload_cast<State>(&jdrones::envs::LQRDroneEnv::reset))
-      .def("step", &jdrones::envs::LQRDroneEnv::step)
-      .def_property_readonly("env", &jdrones::envs::LQRDroneEnv::get_env)
-      .def("set_K", &jdrones::envs::LQRDroneEnv::set_K);
-
-  py::class_<jdrones::controllers::LQRController>(m, "LQRController")
-      .def(py::init<Eigen::Matrix<double, 4, 12>>())
-      .def("reset", py::overload_cast<>(&jdrones::controllers::LQRController::reset))
-      .def("__call__", py::overload_cast<State, State>(&jdrones::controllers::LQRController::operator()))
-      .def_property("K", &jdrones::controllers::LQRController::get_K, &jdrones::controllers::LQRController::set_K);
-
   register_base_polynomial_position_drone_env<jdrones::polynomial::FifthOrderPolynomial>(m, "5O");
   py::class_<
       jdrones::envs::FifthOrderPolyPositionDroneEnv,
       jdrones::envs::BasePolynomialPositionDroneEnv<jdrones::polynomial::FifthOrderPolynomial>>(
       m, "FifthOrderPolyPositionDroneEnv")
-      .def(py::init<double, State, Eigen::Matrix<double, 4, 12>, double>());
+      .def(py::init<double, State, Eigen::Matrix<double, 4, 12>, double>())
+      .def(py::init<double, State, Eigen::Matrix<double, 4, 12>>())
+      .def(py::init<double, State>())
+      .def(py::init<double>())
+      .def_property(
+          "max_vel",
+          &jdrones::envs::FifthOrderPolyPositionDroneEnv::get_max_vel,
+          &jdrones::envs::FifthOrderPolyPositionDroneEnv::get_max_vel);
   register_base_polynomial_position_drone_env<jdrones::polynomial::OptimalFifthOrderPolynomial>(m, "Opt5O");
   py::class_<
       jdrones::envs::OptimalFifthOrderPolyPositionDroneEnv,
       jdrones::envs::BasePolynomialPositionDroneEnv<jdrones::polynomial::OptimalFifthOrderPolynomial>>(
       m, "OptimalFifthOrderPolyPositionDroneEnv")
-      .def(py::init<double, State, Eigen::Matrix<double, 4, 12>, double>());
+      .def(py::init<double, State, Eigen::Matrix<double, 4, 12>, double>())
+      .def(py::init<double, State, Eigen::Matrix<double, 4, 12>>())
+      .def(py::init<double, State>())
+      .def(py::init<double>())
+      .def_property(
+          "max_acc",
+          &jdrones::envs::OptimalFifthOrderPolyPositionDroneEnv::get_max_acc,
+          &jdrones::envs::OptimalFifthOrderPolyPositionDroneEnv::set_max_acc);
 }

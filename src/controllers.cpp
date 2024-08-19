@@ -35,21 +35,6 @@ namespace jdrones::controllers
     this->prev_e = this->e;
     return this->gain * (p + i + d);
   }
-  void LQRController::reset()
-  {
-    this->e.setZero();
-  }
-  VEC4 LQRController::operator()(data::X measured, data::X setpoint)
-  {
-    this->e = error<data::X>(measured, setpoint);
-    return this->K * this->e;
-  }
-  VEC4 LQRController::operator()(data::State measured, data::State setpoint)
-  {
-    data::X measured_x, setpoint_x;
-    measured_x = data::state_to_x(measured);
-    setpoint_x = data::state_to_x(setpoint);
-    return (*this)(measured_x, setpoint_x);
-  }
+
 
 }  // namespace jdrones::controllers
