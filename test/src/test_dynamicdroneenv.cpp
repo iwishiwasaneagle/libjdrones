@@ -58,7 +58,7 @@ TEMPLATE_TEST_CASE(
         observation = env.step(u);
       }
       double observation_sum = observation.sum();
-      bool is_nan = isnanf(observation_sum);
+      bool is_nan = std::isnan(observation_sum);
       REQUIRE(!is_nan);
     }
   }

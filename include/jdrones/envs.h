@@ -141,7 +141,7 @@ namespace jdrones::envs
         {
           term = true;
         }
-        else if (isnanf(dist))
+        else if (std::isnan(dist))
         {
           trunc = true;
         }

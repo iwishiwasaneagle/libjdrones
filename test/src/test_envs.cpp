@@ -43,7 +43,7 @@ TEST_CASE("LQR drone env can hover", "[env,lqr]")
       observation = std::get<0>(env.step(setpoint));
     }
     double observation_sum = observation.sum();
-    bool is_nan = isnanf(observation_sum);
+    bool is_nan = std::isnan(observation_sum);
     REQUIRE(!is_nan);
   }
 }
@@ -70,7 +70,7 @@ TEMPLATE_TEST_CASE(
     bool is_nan = false;
     for (State s : observations)
     {
-      is_nan = isnanf(s.sum());
+      is_nan = std::isnan(s.sum());
 
       if (is_nan)
       {
