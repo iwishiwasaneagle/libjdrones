@@ -16,30 +16,6 @@ namespace jdrones::controllers
     return setpoint - measured;
   }
 
-  class PIDController
-  {
-   private:
-    double Kp, Ki, Kd, dt, gain, windup;
-    double prev_e, e, integration;
-    double calc_P();
-    double calc_I();
-    double calc_D();
-
-   public:
-    PIDController(double Kp, double Ki, double Kd, double dt, double gain, double windup)
-        : Kp(Kp),
-          Ki(Ki),
-          Kd(Kd),
-          dt(dt),
-          gain(gain),
-          windup(windup)
-    {
-      this->PIDController::reset();
-    };
-    double operator()(double measured, double setpoint);
-    void reset();
-  };
-
   template<int xdim, int udim>
   class LQRController
   {
