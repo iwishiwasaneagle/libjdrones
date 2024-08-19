@@ -26,11 +26,10 @@ namespace jdrones::polynomial
    ***********************/
   AMATRIX FifthOrderPolynomial::calc_A_matrix(double T)
   {
-    double T2, T3, T4, T5;
-    T2 = std::pow(T, 2);
-    T3 = std::pow(T, 3);
-    T4 = std::pow(T, 4);
-    T5 = std::pow(T, 5);
+    const double T2 = T * T;
+    const double T3 = T2 * T;
+    const double T4 = T3 * T;
+    const double T5 = T4 * T;
     AMATRIX A{
       { 0.0, 0.0, 0.0, 0.0, 0.0, 1.0 },             // f(t=0)
       { T5, T4, T3, T2, T, 1.0 },                   // f(t=T)
@@ -50,7 +49,11 @@ namespace jdrones::polynomial
     d = coeffs.row(3);
     e = coeffs.row(4);
     f = coeffs.row(5);
-    VEC3 result = a * std::pow(t, 5) + b * std::pow(t, 4) + c * std::pow(t, 3) + d * std::pow(t, 2) + e * t + f;
+    const double t2 = t * t;
+    const double t3 = t2 * t;
+    const double t4 = t3 * t;
+    const double t5 = t4 * t;
+    VEC3 result = a * t5 + b * t4 + c * t3 + d * t2 + e * t + f;
     return result;
   }
 
@@ -67,7 +70,10 @@ namespace jdrones::polynomial
     c = vel_coeffs.row(2);
     d = vel_coeffs.row(3);
     e = vel_coeffs.row(4);
-    return a * std::pow(t, 4) + b * std::pow(t, 3) + c * std::pow(t, 2) + d * t + e;
+    const double t2 = t * t;
+    const double t3 = t2 * t;
+    const double t4 = t3 * t;
+    return a * t4 + b * t3 + c * t2 + d * t + e;
   }
   VEC3 FifthOrderPolynomial::velocity(double t)
   {
@@ -81,7 +87,9 @@ namespace jdrones::polynomial
     b = acc_coeffs.row(1);
     c = acc_coeffs.row(2);
     d = acc_coeffs.row(3);
-    return a * std::pow(t, 3) + b * std::pow(t, 2) + c * t + d;
+    const double t2 = t * t;
+    const double t3 = t2 * t;
+    return a * t3 + b * t2 + c * t + d;
   }
   VEC3 FifthOrderPolynomial::acceleration(double t)
   {
@@ -94,7 +102,8 @@ namespace jdrones::polynomial
     a = jerk_coeffs.row(0);
     b = jerk_coeffs.row(1);
     c = jerk_coeffs.row(2);
-    return a * std::pow(t, 2) + b * t + c;
+    const double t2 = t * t;
+    return a * t2 + b * t + c;
   }
   VEC3 FifthOrderPolynomial::jerk(double t)
   {
