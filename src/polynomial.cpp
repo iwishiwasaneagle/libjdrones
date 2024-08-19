@@ -210,7 +210,7 @@ namespace jdrones::polynomial
    ******************************/
   void OptimalFifthOrderPolynomial::solve()
   {
-    std::function const f = [this](double t_test) -> double
+    std::function<double(double)> const f = [this](double t_test) -> double
     { return get_global_max_abs_accelerations_from_time(this->b_matrix, t_test) - this->max_acc; };
     double t_optim = solvers::bisection_with_right_expansion(f, 0, this->T, this->tol, this->N);
     this->T = t_optim;
