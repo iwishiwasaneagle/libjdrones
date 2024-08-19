@@ -45,31 +45,29 @@ namespace jdrones::solvers
       const Eigen::Matrix<double, udim, udim> &R,
       Eigen::Matrix<double, xdim, xdim> &P)
   {
-    const uint dim_x = A.rows();
-
     // set Hamilton matrix
-    Eigen::MatrixXd Ham = Eigen::MatrixXd::Zero(2 * dim_x, 2 * dim_x);
+    Eigen::MatrixXd Ham = Eigen::MatrixXd::Zero(2 * xdim, 2 * xdim);
     Ham << A, -B * R.inverse() * B.transpose(), -Q, -A.transpose();
 
     // calc eigenvalues and eigenvectors
     Eigen::EigenSolver<Eigen::MatrixXd> Eigs(Ham);
 
     // extract stable eigenvectors into 'eigvec'
-    Eigen::MatrixXcd eigvec = Eigen::MatrixXcd::Zero(2 * dim_x, dim_x);
+    Eigen::MatrixXcd eigvec = Eigen::MatrixXcd::Zero(2 * xdim, xdim);
     int j = 0;
-    for (int i = 0; i < 2 * dim_x; ++i)
+    for (int i = 0; i < 2 * xdim; ++i)
     {
       if (Eigs.eigenvalues()[i].real() < 0.)
       {
-        eigvec.col(j) = Eigs.eigenvectors().block(0, i, 2 * dim_x, 1);
+        eigvec.col(j) = Eigs.eigenvectors().block(0, i, 2 * xdim, 1);
         ++j;
       }
     }
 
     // calc P with stable eigen vector matrix
     Eigen::MatrixXcd Vs_1, Vs_2;
-    Vs_1 = eigvec.block(0, 0, dim_x, dim_x);
-    Vs_2 = eigvec.block(dim_x, 0, dim_x, dim_x);
+    Vs_1 = eigvec.block(0, 0, xdim, xdim);
+    Vs_2 = eigvec.block(xdim, 0, xdim, xdim);
     P = (Vs_2 * Vs_1.inverse()).real();
 
     return true;
@@ -97,7 +95,7 @@ namespace jdrones::solvers
       Eigen::Matrix<double, xdim, xdim> &P,
       const double dt = 0.001,
       const double &tolerance = 1.E-5,
-      const uint iter_max = 100000)
+      const unsigned int iter_max = 100000)
   {
     P = Q;  // initialize
 
@@ -108,7 +106,7 @@ namespace jdrones::solvers
     Eigen::MatrixXd Rinv = R.inverse();
 
     double diff;
-    for (uint i = 0; i < iter_max; ++i)
+    for (int i = 0; i < iter_max; ++i)
     {
       P_next = P + (P * A + AT * P - P * B * Rinv * BT * P + Q) * dt;
       diff = fabs((P_next - P).maxCoeff());
