@@ -87,16 +87,12 @@ namespace jdrones::polynomial
 
     static COEFFVEC calc_snap_coeffs(COEFFMAT3 traj, unsigned int i);
     static COEFFMAT3 calc_snap_coeffs(COEFFMAT3 traj);
-    static COEFFMAT3 calc_snap_coeffs(FifthOrderPolynomial traj);
     static COEFFVEC calc_jerk_coeffs(COEFFMAT3 traj, unsigned int i);
     static COEFFMAT3 calc_jerk_coeffs(COEFFMAT3 traj);
-    static COEFFMAT3 calc_jerk_coeffs(FifthOrderPolynomial traj);
     static COEFFVEC calc_acceleration_coeffs(COEFFMAT3 traj, unsigned int i);
     static COEFFMAT3 calc_acceleration_coeffs(COEFFMAT3 traj);
-    static COEFFMAT3 calc_acceleration_coeffs(FifthOrderPolynomial traj);
     static COEFFVEC calc_velocity_coeffs(COEFFMAT3 traj, unsigned int i);
     static COEFFMAT3 calc_velocity_coeffs(COEFFMAT3 traj);
-    static COEFFMAT3 calc_velocity_coeffs(FifthOrderPolynomial traj);
 
     void solve() override;
 

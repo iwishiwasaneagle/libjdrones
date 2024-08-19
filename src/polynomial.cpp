@@ -135,10 +135,6 @@ namespace jdrones::polynomial
     snap_coeffs.col(2) = calc_snap_coeffs(traj, 2);
     return snap_coeffs;
   }
-  COEFFMAT3 FifthOrderPolynomial::calc_snap_coeffs(FifthOrderPolynomial traj)
-  {
-    return calc_acceleration_coeffs(traj.get_coeffs());
-  }
   COEFFVEC FifthOrderPolynomial::calc_jerk_coeffs(COEFFMAT3 traj, unsigned int i)
   {
     COEFFVEC traj_coeffs = traj.col(i);
@@ -153,11 +149,6 @@ namespace jdrones::polynomial
     jerk_coeffs.col(2) = calc_jerk_coeffs(traj, 2);
     return jerk_coeffs;
   }
-  COEFFMAT3 FifthOrderPolynomial::calc_jerk_coeffs(FifthOrderPolynomial traj)
-  {
-    return calc_acceleration_coeffs(traj.get_coeffs());
-  }
-
   COEFFVEC FifthOrderPolynomial::calc_acceleration_coeffs(COEFFMAT3 traj, unsigned int i)
   {
     COEFFVEC traj_coeffs = traj.col(i);
@@ -171,10 +162,6 @@ namespace jdrones::polynomial
     acceleration_coeffs.col(1) = calc_acceleration_coeffs(traj, 1);
     acceleration_coeffs.col(2) = calc_acceleration_coeffs(traj, 2);
     return acceleration_coeffs;
-  }
-  COEFFMAT3 FifthOrderPolynomial::calc_acceleration_coeffs(FifthOrderPolynomial traj)
-  {
-    return calc_acceleration_coeffs(traj.get_coeffs());
   }
   COEFFVEC FifthOrderPolynomial::calc_velocity_coeffs(COEFFMAT3 traj, unsigned int i)
   {
@@ -190,10 +177,6 @@ namespace jdrones::polynomial
     velocity_coeffs.col(1) = calc_velocity_coeffs(traj, 1);
     velocity_coeffs.col(2) = calc_velocity_coeffs(traj, 2);
     return velocity_coeffs;
-  }
-  COEFFMAT3 FifthOrderPolynomial::calc_velocity_coeffs(FifthOrderPolynomial traj)
-  {
-    return calc_velocity_coeffs(traj.get_coeffs());
   }
   void FifthOrderPolynomial::solve()
   {
