@@ -68,13 +68,13 @@ double jdrones::solvers::bisection_with_right_expansion(
   return bisection(func, a, b, tol, max_iter - iter);
 }
 
-jdrones::types::VEC2 jdrones::solvers::quadratic_roots(jdrones::types::VEC3 abc)
+jdrones::data::VEC2 jdrones::solvers::quadratic_roots(jdrones::data::VEC3 abc)
 {
   return quadratic_roots(abc(0), abc(1), abc(2));
 }
-jdrones::types::VEC2 jdrones::solvers::quadratic_roots(double a, double b, double c)
+jdrones::data::VEC2 jdrones::solvers::quadratic_roots(double a, double b, double c)
 {
-  jdrones::types::VEC2 roots = jdrones::types::VEC2();
+  jdrones::data::VEC2 roots = jdrones::data::VEC2();
   double fourac = 4 * a * c;
   double b2 = b * b;
   if (abs(a) > 0 && b2 >= fourac)

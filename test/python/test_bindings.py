@@ -8,5 +8,5 @@ from libjdrones import NonLinearDynamicModelDroneEnv, LinearDynamicModelDroneEnv
 def test_dynamic_model_envs(env_cls):
     env = env_cls(0.1)
     u = np.ones(4)
-    obs = env.step(u)
+    obs, rew, term, trunc, info = env.step(u)
     assert not np.isnan(np.sum(obs))

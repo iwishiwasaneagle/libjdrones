@@ -5,15 +5,14 @@
 
 #ifndef STATE_H
 #define STATE_H
-#include <eigen3/Eigen/Core>
-
-#include "jdrones/transforms.h"
-
-using VEC3 = Eigen::Matrix<double, 3, 1>;
-using VEC4 = Eigen::Matrix<double, 4, 1>;
+#include <eigen3/Eigen/Eigen>
 
 namespace jdrones::data
 {
+  typedef Eigen::Matrix<double, 4, 1> VEC4;
+  typedef Eigen::Matrix<double, 3, 1> VEC3;
+  typedef Eigen::Matrix<double, 2, 1> VEC2;
+
   class State : public Eigen::Matrix<double, 20, 1>
   {
    public:

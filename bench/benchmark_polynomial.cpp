@@ -8,6 +8,7 @@
 #include "jdrones/data.h"
 #include "jdrones/polynomial.h"
 
+using namespace jdrones::data;
 
 template<class Poly>
 Poly make_poly()

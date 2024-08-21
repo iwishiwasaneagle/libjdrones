@@ -5,14 +5,14 @@
 
 #ifndef POLYNOMIAL_H
 #define POLYNOMIAL_H
-#include <eigen3/Eigen/Core>
-#include <eigen3/Eigen/Dense>
+#include <eigen3/Eigen/Eigen>
 
+#include "jdrones/data.h"
 #include "jdrones/solvers.h"
 
 namespace jdrones::polynomial
 {
-  using namespace jdrones::types;
+  using namespace jdrones::data;
 
   using BMATRIX = Eigen::Matrix<double, 6, 3>;
   using AMATRIX = Eigen::Matrix<double, 6, 6>;

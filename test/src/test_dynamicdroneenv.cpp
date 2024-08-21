@@ -3,9 +3,9 @@
  * SPDX-License-Identifier: GPL-3.0-only
  */
 
-#include <jdrones/dynamics.h>
-
 #include <catch2/catch_all.hpp>
+
+#include "jdrones/dynamics/dynamics.h"
 
 using namespace jdrones::dynamics;
 
@@ -55,7 +55,7 @@ TEMPLATE_TEST_CASE(
       State observation;
       for (int i = 0; i < T / dt; ++i)
       {
-        observation = env.step(u);
+        observation = std::get<0>(env.step(u));
       }
       double observation_sum = observation.sum();
       bool is_nan = std::isnan(observation_sum);
@@ -71,7 +71,7 @@ TEMPLATE_TEST_CASE(
     {
       double mag = GENERATE(0, 0.1);
       Eigen::Vector4d u = Eigen::Vector4d::Constant(mag);
-      obs = env.step(u);
+        obs = std::get<0>(env.step(u));
       SECTION("Velocity is downward")
       {
         Eigen::Vector3d vel = obs.get_vel();
@@ -88,7 +88,7 @@ TEMPLATE_TEST_CASE(
     {
       double mag = GENERATE(100, 1e4);
       Eigen::Vector4d u = Eigen::Vector4d::Constant(mag);
-      obs = env.step(u);
+        obs = std::get<0>(env.step(u));
       SECTION("Velocity is upward")
       {
         Eigen::Vector3d vel = obs.get_vel();
@@ -114,7 +114,7 @@ TEMPLATE_TEST_CASE(
       int i = GENERATE(range(0, 6));
       DYNAMIC_SECTION("Sign matches expected for test case " << i)
       {
-        obs = env.step(hover_mag * vec_omega.row(i));
+        obs = std::get<0>(env.step(hover_mag * vec_omega.row(i)));
         REQUIRE_THAT(obs.get_ang_vel().cwiseSign(), Catch::Matchers::RangeEquals(exp.row(i)));
       }
     }
@@ -131,7 +131,7 @@ TEMPLATE_TEST_CASE(
       int i = GENERATE(range(0, 6));
       DYNAMIC_SECTION("Sign matches expected for test case " << i)
       {
-        obs = env.step(hover_mag * vec_omega.row(i));
+        obs = std::get<0>(env.step(hover_mag * vec_omega.row(i)));
         REQUIRE_THAT(obs.get_ang_vel().cwiseSign(), Catch::Matchers::RangeEquals(exp.row(i)));
       }
     }
@@ -147,7 +147,7 @@ TEMPLATE_TEST_CASE(
       int i = GENERATE(range(0, 4));
       DYNAMIC_SECTION("Sign matches expected for test case " << i)
       {
-        obs = env.step(hover_mag * vec_omega.row(i));
+        obs = std::get<0>(env.step(hover_mag * vec_omega.row(i)));
         REQUIRE_THAT(obs.get_ang_vel().cwiseSign(), Catch::Matchers::RangeEquals(exp.row(i)));
       }
     }
@@ -168,7 +168,7 @@ TEMPLATE_TEST_CASE(
         state.set_quat(jdrones::euler_to_quat(state.get_rpy()));
         env.reset(state);
 
-        obs = env.step(VEC4::Constant(0.99 * hover_mag));
+        obs = std::get<0>(env.step(VEC4::Constant(0.99 * hover_mag)));
         REQUIRE_THAT(obs.get_vel().cwiseSign(), Catch::Matchers::RangeEquals(exp.row(i)));
       }
     }
@@ -182,7 +182,7 @@ TEMPLATE_TEST_CASE(
         state.set_vel(vel.row(i));
         env.reset(state);
 
-        obs = env.step(VEC4::Zero());
+        obs = std::get<0>(env.step(VEC4::Zero()));
         REQUIRE_THAT(obs.get_pos().cwiseSign(), Catch::Matchers::RangeEquals(vel.row(i)));
       }
     }
@@ -201,7 +201,7 @@ TEMPLATE_TEST_CASE(
         state.set_ang_vel(ang_vel.row(i));
         env.reset(state);
 
-        obs = env.step(VEC4::Zero());
+        obs = std::get<0>(env.step(VEC4::Zero()));
         REQUIRE_THAT(obs.get_rpy().cwiseSign(), Catch::Matchers::RangeEquals(ang_vel.row(i)));
       }
     }
@@ -220,7 +220,7 @@ TEMPLATE_TEST_CASE(
       int i = GENERATE(range(0, 2));
       DYNAMIC_SECTION("Sign matches expected for test case " << i)
       {
-        obs = env.step(100 * u.row(i));
+        obs = std::get<0>(env.step(100 * u.row(i)));
         REQUIRE_THAT(obs.get_ang_vel().cwiseSign(), Catch::Matchers::RangeEquals(exp.row(i)));
       }
     }

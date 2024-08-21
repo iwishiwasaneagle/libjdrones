@@ -10,13 +10,13 @@
 
 #include "jdrones/controllers.h"
 #include "jdrones/data.h"
-#include "jdrones/dynamics.h"
-#include "jdrones/envs.h"
+#include "jdrones/dynamics/dynamics.h"
+#include "jdrones/envs/envs.h"
 #include "jdrones/polynomial.h"
 
 namespace py = pybind11;
 using namespace py::literals;
-using namespace jdrones::types;
+using namespace jdrones::data;
 
 class PyBaseDynamicModelDroneEnv : public jdrones::dynamics::BaseDynamicModelDroneEnv
 {
@@ -85,7 +85,6 @@ void register_base_polynomial_position_drone_env(py::module& m, std::string type
   using BPPDE = jdrones::envs::BasePolynomialPositionDroneEnv<Polynomial>;
   py::class_<BPPDE, PyBasePolynomialPositionDroneEnv<Polynomial>>(
       m, (std::string("BasePolynomialPositionDroneEnv") + typestr).c_str())
-      .def(py::init<double, State, Eigen::Matrix<double, 4, 12>>())
       .def(py::init<double, State>())
       .def(py::init<double>())
       .def("calc_traj", &BPPDE::calc_traj)
@@ -96,6 +95,44 @@ void register_base_polynomial_position_drone_env(py::module& m, std::string type
       .def("step", py::overload_cast<std::pair<VEC3, VEC3>>(&BPPDE::step))
       .def_property_readonly("env", &BPPDE::get_env)
       .def_property_readonly("dt", &BPPDE::get_dt);
+}
+
+template<class ReturnType, class ResetType, class ActionType>
+class PyEnv : public jdrones::gymnasium::Env<ReturnType, ResetType, ActionType>
+{
+ public:
+  std::tuple<ReturnType, std::map<std::string, Eigen::VectorXd>> reset() override
+  {
+    using PARAMS = std::tuple<ReturnType, std::map<std::string, Eigen::VectorXd>>;
+    using ENV = jdrones::gymnasium::Env<ReturnType, ResetType, ActionType>;
+    PYBIND11_OVERRIDE_PURE(PARAMS, ENV, reset);
+  }
+  std::tuple<ReturnType, std::map<std::string, Eigen::VectorXd>> reset(ResetType option) override
+  {
+    using PARAMS = std::tuple<ReturnType, std::map<std::string, Eigen::VectorXd>>;
+    using ENV = jdrones::gymnasium::Env<ReturnType, ResetType, ActionType>;
+    PYBIND11_OVERRIDE_PURE(PARAMS, ENV, reset, option);
+  }
+  std::tuple<ReturnType, double, bool, bool, std::map<std::string, Eigen::VectorXd>> step(ActionType action) override
+  {
+    using PARAMS = std::tuple<ReturnType, double, bool, bool, std::map<std::string, Eigen::VectorXd>>;
+    using ENV = jdrones::gymnasium::Env<ReturnType, ResetType, ActionType>;
+    PYBIND11_OVERRIDE_PURE(PARAMS, ENV, step, action);
+  }
+};
+
+template<class ReturnType, class ResetType, class ActionType>
+void register_gymnasium_env(py::module& m, std::string tag)
+{
+  using ENV = jdrones::gymnasium::Env<ReturnType, ResetType, ActionType>;
+  using PYENV = PyEnv<ReturnType, ResetType, ActionType>;
+  std::string class_name = "Env";
+  class_name += "_" + tag;
+  py::class_<ENV, PYENV>(m, class_name.c_str())
+      .def(py::init<>())
+      .def("reset", py::overload_cast<>(&ENV::reset))
+      .def("reset", py::overload_cast<ResetType>(&ENV::reset))
+      .def("step", &ENV::step);
 }
 
 template<int xdim, int udim>
@@ -113,12 +150,15 @@ void register_lqr_controller(py::module& m)
       .def(py::init<Eigen::Matrix<double, udim, xdim>>())
       .def("reset", py::overload_cast<>(&LQR::reset))
       .def("__call__", py::overload_cast<Eigen::Matrix<double, xdim, 1>, Eigen::Matrix<double, xdim, 1>>(&LQR::operator()))
-      .def_property("K", &LQR::get_K, &LQR::set_K);
+      .def_property_readonly("K", &LQR::get_K);
 }
 
 PYBIND11_MODULE(_core, m)
 {
   m.doc() = "A C++ library to speed jdrones computations";
+
+  register_gymnasium_env<State, State, State>(m, "state_state_state");
+  register_gymnasium_env<State, State, VEC4>(m, "state_state_vec4");
 
   py::class_<Eigen::Matrix<double, 20, 1>>(m, "EigenMatrix20d1");
   py::class_<jdrones::data::State, Eigen::Matrix<double, 20, 1>>(m, "State")
@@ -154,14 +194,13 @@ PYBIND11_MODULE(_core, m)
       .def(py::init<double, State>());
 
   register_lqr_controller<12, 4>(m);
-  py::class_<jdrones::envs::LQRDroneEnv, jdrones::dynamics::NonlinearDynamicModelDroneEnv>(m, "LQRDroneEnv")
-      .def(py::init<double, State, Eigen::Matrix<double, 4, 12>>())
+  py::class_<jdrones::envs::LQRDroneEnv, jdrones::gymnasium::Env<State, State, State>>(m, "LQRDroneEnv")
       .def(py::init<double, State>())
       .def(py::init<double>())
       .def("reset", py::overload_cast<>(&jdrones::envs::LQRDroneEnv::reset))
       .def("reset", py::overload_cast<State>(&jdrones::envs::LQRDroneEnv::reset))
       .def("step", &jdrones::envs::LQRDroneEnv::step)
-      .def("set_K", &jdrones::envs::LQRDroneEnv::set_K);
+      .def_property_readonly("env", &jdrones::envs::LQRDroneEnv::get_env);
 
   py::class_<jdrones::polynomial::BasePolynomial, PyBasePolynomial>(m, "BasePolynomial")
       .def(py::init<VEC3, VEC3, VEC3, VEC3, VEC3, VEC3, double>())
@@ -188,8 +227,6 @@ PYBIND11_MODULE(_core, m)
       jdrones::envs::FifthOrderPolyPositionDroneEnv,
       jdrones::envs::BasePolynomialPositionDroneEnv<jdrones::polynomial::FifthOrderPolynomial>>(
       m, "FifthOrderPolyPositionDroneEnv")
-      .def(py::init<double, State, Eigen::Matrix<double, 4, 12>, double>())
-      .def(py::init<double, State, Eigen::Matrix<double, 4, 12>>())
       .def(py::init<double, State>())
       .def(py::init<double>())
       .def_property(
@@ -201,8 +238,7 @@ PYBIND11_MODULE(_core, m)
       jdrones::envs::OptimalFifthOrderPolyPositionDroneEnv,
       jdrones::envs::BasePolynomialPositionDroneEnv<jdrones::polynomial::OptimalFifthOrderPolynomial>>(
       m, "OptimalFifthOrderPolyPositionDroneEnv")
-      .def(py::init<double, State, Eigen::Matrix<double, 4, 12>, double>())
-      .def(py::init<double, State, Eigen::Matrix<double, 4, 12>>())
+      .def(py::init<double, State, double>())
       .def(py::init<double, State>())
       .def(py::init<double>())
       .def_property(

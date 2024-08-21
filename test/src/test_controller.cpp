@@ -7,24 +7,6 @@
 
 #include <catch2/catch_all.hpp>
 
-TEMPLATE_TEST_CASE("Error calculation", "[controller,util]", jdrones::data::State, jdrones::data::X)
-{
-  TestType setpoint = TestType::Zero();
-  TestType measured, e;
-  SECTION("Expect error to be positive")
-  {
-    measured = TestType::Constant(-1.);
-    e = jdrones::controllers::error<TestType>(measured, setpoint);
-    REQUIRE(e.sum() == 1 * measured.rows());
-  }
-  SECTION("Expect error to be negative")
-  {
-    measured = TestType::Constant(1.);
-    e = jdrones::controllers::error<TestType>(measured, setpoint);
-    REQUIRE(e.sum() == -1 * measured.rows());
-  }
-}
-
 TEST_CASE("LQR controller with known results", "[lqr,controller]")
 {
   SECTION("With given K")

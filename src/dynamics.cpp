@@ -2,10 +2,9 @@
  * Copyright (c) 2024.  Jan-Hendrik Ewers
  * SPDX-License-Identifier: GPL-3.0-only
  */
-#include "jdrones/dynamics.h"
-
 #include <eigen3/Eigen/Core>
-#include <eigen3/Eigen/Dense>
+
+#include "jdrones/dynamics/dynamics.h"
 
 VEC4 jdrones::dynamics::BaseDynamicModelDroneEnv::rpm2rpyT(VEC4 rpm)
 {
@@ -16,13 +15,14 @@ VEC4 jdrones::dynamics::BaseDynamicModelDroneEnv::rpyT2rpm(VEC4 rpm)
   return VEC4(mixing_matrix.inverse() * rpm);
 }
 
-State jdrones::dynamics::BaseDynamicModelDroneEnv::step(VEC4 rpm)
+std::tuple<State, double, bool, bool, std::map<std::string, Eigen::VectorXd>>
+jdrones::dynamics::BaseDynamicModelDroneEnv::step(VEC4 rpm)
 {
   State dstate = this->calc_dstate(rpm);
   this->state += dt * dstate;
   this->state.set_prop_omega(rpm);
   this->state.set_quat(euler_to_quat(this->state.get_rpy()));
-  return this->state;
+  return { this->state, 0, false, false, {} };
 }
 
 State jdrones::dynamics::NonlinearDynamicModelDroneEnv::calc_dstate(VEC4 rpm)

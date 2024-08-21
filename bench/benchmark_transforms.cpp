@@ -7,9 +7,11 @@
 
 #include "jdrones/transforms.h"
 
+using namespace jdrones::data;
+
 static void BM_euler_to_quat(benchmark::State& state)
 {
-  Eigen::Vector3d rpy = Eigen::Vector3d::Random();
+  VEC3 rpy = Eigen::Vector3d::Random();
 
   for (auto _ : state)
   {
@@ -20,7 +22,7 @@ BENCHMARK(BM_euler_to_quat);
 
 static void BM_quat_to_euler(benchmark::State& state)
 {
-  Eigen::Vector4d quat = Eigen::Vector4d::Random();
+  VEC4 quat = Eigen::Vector4d::Random();
 
   for (auto _ : state)
   {

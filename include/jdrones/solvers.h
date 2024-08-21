@@ -6,11 +6,10 @@
 #ifndef SOLVERS_H
 #define SOLVERS_H
 
-#include <eigen3/Eigen/Core>
-#include <eigen3/Eigen/Dense>
+#include <eigen3/Eigen/Eigen>
 #include <functional>
 
-#include "jdrones/types.h"
+#include "jdrones/data.h"
 
 namespace jdrones::solvers
 {
@@ -23,8 +22,8 @@ namespace jdrones::solvers
       double tol = 1e-8,
       unsigned int max_iter = 10000);
 
-  types::VEC2 quadratic_roots(types::VEC3 abc);
-  types::VEC2 quadratic_roots(double a, double b, double c);
+  data::VEC2 quadratic_roots(data::VEC3 abc);
+  data::VEC2 quadratic_roots(double a, double b, double c);
 
   /**
    * @brief Arimoto Potter method for continuous model of Riccati equation

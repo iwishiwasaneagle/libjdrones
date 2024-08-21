@@ -3,11 +3,11 @@
  * SPDX-License-Identifier: GPL-3.0-only
  */
 
-#include <jdrones/dynamics.h>
 
 #include <catch2/catch_all.hpp>
 
-#include "jdrones/envs.h"
+#include "jdrones/envs/envs.h"
+#include "jdrones/dynamics/dynamics.h"
 
 using namespace jdrones::envs;
 
@@ -62,7 +62,7 @@ TEMPLATE_TEST_CASE(
     TestType env(dt);
     env.reset();
 
-    std::tuple<States, double, bool, bool> observation = env.step(setpoint);
+    auto observation = env.step(setpoint);
     bool term = std::get<2>(observation);
     bool trunc = std::get<3>(observation);
 

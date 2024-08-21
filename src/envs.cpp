@@ -2,39 +2,33 @@
  * Copyright (c) 2024.  Jan-Hendrik Ewers
  * SPDX-License-Identifier: GPL-3.0-only
  */
-#include "jdrones/envs.h"
-
-#include "jdrones/constants.h"
+#include "jdrones/envs/envs.h"
 
 namespace jdrones::envs
 {
-  data::State LQRDroneEnv::reset(data::State state)
+  std::tuple<State, std::map<std::string, Eigen::VectorXd>> LQRDroneEnv::reset(data::State state)
   {
-    NonlinearDynamicModelDroneEnv::reset(state);
     this->controller.reset();
-
-    return this->state;
+    return this->env.reset(state);
   }
 
-  data::State LQRDroneEnv::reset()
+  std::tuple<State, std::map<std::string, Eigen::VectorXd>> LQRDroneEnv::reset()
   {
-    NonlinearDynamicModelDroneEnv::reset();
-    this->controller.reset();
-
-    return this->state;
+    return this->reset(State::Zero());
   }
-  std::tuple<State, double, bool, bool> LQRDroneEnv::step(data::State action)
+  std::tuple<State, double, bool, bool, std::map<std::string, Eigen::VectorXd>> LQRDroneEnv::step(data::State action)
   {
-    VEC4 lqr_action = this->controller(state_to_x(this->state), state_to_x(action));
+    VEC4 lqr_action = this->controller(state_to_x(this->env.get_state()), state_to_x(action));
 
-    VEC4 delinearised_action{ 0, 0, 0, this->mass * constants::g };
+    VEC4 delinearised_action{ 0, 0, 0, this->env.get_mass() * constants::g };
     delinearised_action += lqr_action;
-    delinearised_action = this->rpyT2rpm(delinearised_action);
+    delinearised_action = this->env.rpyT2rpm(delinearised_action);
     delinearised_action = delinearised_action.cwiseMax(0).cwiseSqrt();
 
-    data::State obs = NonlinearDynamicModelDroneEnv::step(delinearised_action);
+    std::tuple<State, double, bool, bool, std::map<std::string, Eigen::VectorXd>> obs =
+        this->env.step(delinearised_action);
 
-    return { obs, 0.0, false, false };
+    return { std::get<0>(obs), 0.0, false, false, {} };
   }
 
   polynomial::FifthOrderPolynomial FifthOrderPolyPositionDroneEnv::calc_traj(

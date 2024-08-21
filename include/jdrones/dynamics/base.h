@@ -3,37 +3,36 @@
  * SPDX-License-Identifier: GPL-3.0-only
  */
 
-#ifndef DYNAMICS_H
-#define DYNAMICS_H
-#include <eigen3/Eigen/Core>
+#ifndef DYNAMICS_BASE_H
+#define DYNAMICS_BASE_H
+#include <eigen3/Eigen/Eigen>
 
 #include "jdrones/constants.h"
 #include "jdrones/data.h"
+#include "jdrones/gymnasium.h"
 #include "jdrones/transforms.h"
 
-using namespace jdrones::data;
 namespace jdrones::dynamics
 {
-  class BaseDynamicModelDroneEnv
+using namespace jdrones::data;
+  class BaseDynamicModelDroneEnv : public jdrones::gymnasium::Env<State, State, VEC4>
   {
    public:
     BaseDynamicModelDroneEnv(double dt, State state) : dt(dt), state(state)
     {
     }
     explicit BaseDynamicModelDroneEnv(double dt) : BaseDynamicModelDroneEnv(dt, State::Zero()){};
-    State reset(State state)
+    std::tuple<State, std::map<std::string, Eigen::VectorXd>> reset(State state) override
     {
       this->state = state;
       this->state.set_quat(euler_to_quat(this->state.get_rpy()));
-      return this->state;
+      return { this->state, {} };
     };
-    State reset()
+    std::tuple<State, std::map<std::string, Eigen::VectorXd>> reset() override
     {
-      this->state.setZero();
-      this->state.set_quat(euler_to_quat(this->state.get_rpy()));
-      return this->state;
+      return this->reset(State::Zero());
     };
-    State step(VEC4);
+    std::tuple<State, double, bool, bool, std::map<std::string, Eigen::VectorXd>> step(VEC4) override;
 
     const double dt;
 
@@ -94,8 +93,6 @@ namespace jdrones::dynamics
       return state;
     }
 
-    State state;
-
     const double l = 0.1;
     const double k_T = 0.1;
     const double k_Q = 0.05;
@@ -145,26 +142,8 @@ namespace jdrones::dynamics
     VEC4 rpyT2rpm(VEC4 rpyT);
 
    protected:
+    State state;
     virtual State calc_dstate(VEC4) = 0;
   };
-
-  class LinearDynamicModelDroneEnv : public BaseDynamicModelDroneEnv
-  {
-   public:
-    using BaseDynamicModelDroneEnv::BaseDynamicModelDroneEnv;
-
-   protected:
-    State calc_dstate(VEC4) override;
-  };
-
-  class NonlinearDynamicModelDroneEnv : public BaseDynamicModelDroneEnv
-  {
-   public:
-    using BaseDynamicModelDroneEnv::BaseDynamicModelDroneEnv;
-
-   protected:
-    State calc_dstate(VEC4) override;
-  };
-
 }  // namespace jdrones::dynamics
-#endif  // DYNAMICS_H
+#endif  // DYNAMICS_BASE_H

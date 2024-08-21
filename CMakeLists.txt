@@ -125,7 +125,10 @@ if(DEFINED BUILD_PYTHON OR DEFINED DEV)
     # build flow.
     find_package(Python REQUIRED COMPONENTS Interpreter Development.Module)
     find_package(pybind11 CONFIG REQUIRED)
-    find_package(${LIB_NAME} REQUIRED)
+    find_package(
+            ${LIB_NAME} REQUIRED
+            HINTS ${CMAKE_CURRENT_BINARY_DIR}/
+    )
 
     # pybind11.readthedocs.io/en/stable/changelog.html
     if ((Python_VERSION GREATER_EQUAL "3.11") AND (pybind11_VERSION LESS 2.10.1))

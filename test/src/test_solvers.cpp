@@ -3,6 +3,7 @@
  * SPDX-License-Identifier: GPL-3.0-only
  */
 #include <jdrones/solvers.h>
+#include <jdrones/data.h>
 
 #include <catch2/catch_all.hpp>
 #include <cmath>
@@ -49,13 +50,13 @@ TEST_CASE("Calculate roots of the quadratic equation", "[solver,quadratic]")
   {
     SECTION("x^2-2x+0.5")
     {
-      jdrones::types::VEC2 roots = quadratic_roots(1, -2, 0.5);
+      jdrones::data::VEC2 roots = quadratic_roots(1, -2, 0.5);
       REQUIRE_THAT(roots(0), Catch::Matchers::WithinRel(1 + 1 / sqrt(2)));
       REQUIRE_THAT(roots(1), Catch::Matchers::WithinRel(1 - 1 / sqrt(2)));
     }
     SECTION("x^2-2x+1")
     {
-      jdrones::types::VEC2 roots = quadratic_roots(1, -2, 1);
+      jdrones::data::VEC2 roots = quadratic_roots(1, -2, 1);
       REQUIRE_THAT(roots(0), Catch::Matchers::WithinRel(1.));
       REQUIRE_THAT(roots(1), Catch::Matchers::WithinRel(1.));
     }
@@ -64,7 +65,7 @@ TEST_CASE("Calculate roots of the quadratic equation", "[solver,quadratic]")
   {
     SECTION("x^2-2x+2")
     {
-      jdrones::types::VEC2 roots = quadratic_roots(1, -2, 1.1);
+      jdrones::data::VEC2 roots = quadratic_roots(1, -2, 1.1);
       REQUIRE(roots.isZero());
     }
   }
