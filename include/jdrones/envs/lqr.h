@@ -1,11 +1,12 @@
 /*
- * Copyright (c) 2024.  Jan-Hendrik Ewers
+ * Copyright (c) 2024-2025.  Jan-Hendrik Ewers
  * SPDX-License-Identifier: GPL-3.0-only
  */
 
 #ifndef LQR_H
 #define LQR_H
 #include <eigen3/Eigen/Core>
+
 #include "jdrones/controllers.h"
 #include "jdrones/data.h"
 #include "jdrones/dynamics/nonlinear.h"
@@ -21,6 +22,11 @@ namespace jdrones::envs
 
    public:
     LQRDroneEnv(double dt, State state, Eigen::Matrix<double, 4, 12> K) : env(dt, state), controller(K)
+    {
+    }
+    LQRDroneEnv(double dt, State state, Eigen::Matrix<double, 12, 12> Q, Eigen::Matrix<double, 4, 4> R)
+        : env(dt, state),
+          controller(env.get_A(), env.get_B(), Q, R)
     {
     }
     LQRDroneEnv(double dt, State state) : LQRDroneEnv(dt, state, Eigen::Matrix<double, 4, 12>::Zero())
