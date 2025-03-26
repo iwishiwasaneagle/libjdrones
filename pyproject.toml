@@ -1,14 +1,13 @@
 [project]
 name = "libjdrones"
 description = "A C++ library to speed up jdrones computations"
-author = [
+authors = [
     {name= "Jan-Hendrik Ewers", email="j.ewers.1@research.gla.ac.uk"}
     ]
 dynamic = ["version"]
 license.file = "LICENSE.txt"
 readme = "README.md"
 requires-python = ">=3.10"
-platforms = "Linux"
 classifiers = [
 "Development Status :: 3 - Alpha",
 "Natural Language :: English",

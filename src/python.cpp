@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024.  Jan-Hendrik Ewers
+ * Copyright (c) 2024-2025.  Jan-Hendrik Ewers
  * SPDX-License-Identifier: GPL-3.0-only
  */
 
@@ -195,6 +195,8 @@ PYBIND11_MODULE(_core, m)
 
   register_lqr_controller<12, 4>(m);
   py::class_<jdrones::envs::LQRDroneEnv, jdrones::gymnasium::Env<State, State, State>>(m, "LQRDroneEnv")
+      .def(py::init<double, State, Eigen::Matrix<double, 12, 12>,  Eigen::Matrix<double, 4, 4>>())
+      .def(py::init<double, State, Eigen::Matrix<double, 4, 12>>())
       .def(py::init<double, State>())
       .def(py::init<double>())
       .def("reset", py::overload_cast<>(&jdrones::envs::LQRDroneEnv::reset))
